@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "124419940113",
+    "project_id": "vreetory-app",
+    "storage_bucket": "vreetory-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:124419940113:android:f1ed412ed777145eaf36b0",
+        "android_client_info": {
+          "package_name": "com.example.vreetory_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAVtlqEXZVhu2sNG5mxaD9T_YdJUpOaRCo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
