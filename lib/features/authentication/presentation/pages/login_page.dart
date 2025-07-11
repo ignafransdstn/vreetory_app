@@ -16,12 +16,15 @@ class LoginPage extends ConsumerWidget {
     ref.listen<AuthState>(authProvider, (previous, next) {
       if (next.status == AuthStatus.authenticated && next.user != null) {
         if (next.user!.role == 'admin') {
-          Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const AdminHomePage()));
+          Navigator.pushReplacement(context,
+              MaterialPageRoute(builder: (_) => const AdminHomePage()));
         } else {
-          Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const UserHomePage()));
+          Navigator.pushReplacement(
+              context, MaterialPageRoute(builder: (_) => const UserHomePage()));
         }
       } else if (next.status == AuthStatus.error && next.error != null) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(next.error!)));
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(next.error!)));
       }
     });
 
@@ -33,11 +36,13 @@ class LoginPage extends ConsumerWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               // Logo dan judul
-              const SizedBox(height: 40),
-              Image.asset('assets/logo.png', height: 80), // Ganti sesuai asset Anda
-              const SizedBox(height: 16),
+              // const SizedBox(height: 15),
+              Image.asset('assets/images/asset1.png',
+                  width: 289, height: 250), // Ganti sesuai asset Anda
+              // const SizedBox(height: 2),
               const Text('Inventory App', style: TextStyle(color: Colors.grey)),
-              const Text('VreeTory', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22)),
+              const Text('VreeTory',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22)),
               const SizedBox(height: 32),
               Container(
                 padding: const EdgeInsets.all(24),
@@ -50,20 +55,37 @@ class LoginPage extends ConsumerWidget {
                   children: [
                     TextField(
                       controller: emailController,
-                      decoration: const InputDecoration(labelText: 'Email', fillColor: Color(0xFFFFFDE4), filled: true),
+                      decoration: InputDecoration(
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: const BorderSide(
+                                width: 0, style: BorderStyle.none),
+                          ),
+                          labelText: 'Email',
+                          fillColor: const Color(0xFFFFFDE4),
+                          filled: true),
                     ),
                     const SizedBox(height: 16),
                     TextField(
                       controller: passwordController,
                       obscureText: true,
-                      decoration: const InputDecoration(labelText: 'Password', fillColor: Color(0xFFFFFDE4), filled: true),
+                      decoration: InputDecoration(
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: const BorderSide(
+                                width: 0, style: BorderStyle.none),
+                          ),
+                          labelText: 'Password',
+                          fillColor: const Color(0xFFFFFDE4),
+                          filled: true),
                     ),
                     const SizedBox(height: 24),
                     Row(
                       children: [
                         Expanded(
                           child: ElevatedButton(
-                            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFFFD93D)),
+                            style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFFFFD93D)),
                             onPressed: authState.status == AuthStatus.loading
                                 ? null
                                 : () {
@@ -81,7 +103,8 @@ class LoginPage extends ConsumerWidget {
                         const SizedBox(width: 12),
                         Expanded(
                           child: ElevatedButton(
-                            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFD6FFB7)),
+                            style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFFD6FFB7)),
                             onPressed: () {
                               // TODO: Navigasi ke halaman register
                             },
