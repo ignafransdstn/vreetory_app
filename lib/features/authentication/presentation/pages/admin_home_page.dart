@@ -5,6 +5,17 @@ class AdminHomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Placeholder();
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Admin Home Page'),
+        backgroundColor: const Color(0xFF4B7F52),
+      ),
+      body: const Center(
+        child: Text(
+          'Welcome to the Admin Home Page',
+          style: TextStyle(fontSize: 24, color: Colors.black87),
+        ),
+      ),
+    );
   }
 }

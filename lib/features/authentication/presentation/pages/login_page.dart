@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/auth_provider.dart';
 import 'admin_home_page.dart';
 import 'user_home_page.dart';
+import 'register_page.dart';
 
 class LoginPage extends ConsumerWidget {
   const LoginPage({super.key});
@@ -106,7 +107,12 @@ class LoginPage extends ConsumerWidget {
                             style: ElevatedButton.styleFrom(
                                 backgroundColor: const Color(0xFFD6FFB7)),
                             onPressed: () {
-                              // TODO: Navigasi ke halaman register
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => const RegisterPage(),
+                                ),
+                              );
                             },
                             child: const Text('Register'),
                           ),
