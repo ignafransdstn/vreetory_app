@@ -17,35 +17,22 @@ class _HomePageScaffold extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFD6FFB7),
+      // Using a custom app bar with rounded corners
+      appBar: AppBar(
+        title: Text(
+          '$userType Home',
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(bottom: Radius.circular(16)),
+        ),
+        backgroundColor: const Color(0xFF4B7F52),
+        centerTitle: true,
+        elevation: 0,
+      ),
       body: SafeArea(
         child: Column(
           children: [
-            // Header
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: Row(
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Welcome\n$userType Name',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const Spacer(),
-                  IconButton(
-                    icon: const Icon(Icons.refresh, color: Color(0xFF4B7F52)),
-                    onPressed: () {},
-                  ),
-                ],
-              ),
-            ),
             // Logo and App Name
             Padding(
               padding: const EdgeInsets.only(top: 8, bottom: 8),
@@ -53,7 +40,7 @@ class _HomePageScaffold extends StatelessWidget {
                 children: [
                   Image.asset(
                     'assets/images/asset1.png',
-                    width: 80,
+                    width: 200,
                     height: 80,
                   ),
                   const SizedBox(height: 4),
@@ -75,7 +62,8 @@ class _HomePageScaffold extends StatelessWidget {
             // Cards
             Expanded(
               child: ListView(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 children: const [
                   _HomeSectionCard(title: '7 Days to Expired'),
                   SizedBox(height: 16),
