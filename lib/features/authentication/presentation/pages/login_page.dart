@@ -5,14 +5,28 @@ import 'admin_home_page.dart';
 import 'user_home_page.dart';
 import 'register_page.dart';
 
-class LoginPage extends ConsumerWidget {
+class LoginPage extends ConsumerStatefulWidget {
   const LoginPage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<LoginPage> createState() => _LoginPageState();
+}
+
+class _LoginPageState extends ConsumerState<LoginPage> {
+  final emailController = TextEditingController();
+  final passwordController = TextEditingController();
+  bool _obscurePassword = true;
+
+  @override
+  void dispose() {
+    emailController.dispose();
+    passwordController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
-    final emailController = TextEditingController();
-    final passwordController = TextEditingController();
 
     ref.listen<AuthState>(authProvider, (previous, next) {
       if (next.status == AuthStatus.authenticated && next.user != null) {
@@ -37,10 +51,8 @@ class LoginPage extends ConsumerWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               // Logo dan judul
-              // const SizedBox(height: 15),
               Image.asset('assets/images/asset1.png',
                   width: 289, height: 250), // Ganti sesuai asset Anda
-              // const SizedBox(height: 2),
               const Text('Inventory App', style: TextStyle(color: Colors.grey)),
               const Text('VreeTory',
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22)),
@@ -62,23 +74,37 @@ class LoginPage extends ConsumerWidget {
                             borderSide: const BorderSide(
                                 width: 0, style: BorderStyle.none),
                           ),
-                          labelText: 'Email',
+                          hintText: 'Email',
                           fillColor: const Color(0xFFFFFDE4),
                           filled: true),
                     ),
                     const SizedBox(height: 16),
                     TextField(
                       controller: passwordController,
-                      obscureText: true,
+                      obscureText: _obscurePassword,
                       decoration: InputDecoration(
                         border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            borderSide: const BorderSide(
-                                width: 0, style: BorderStyle.none),
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: const BorderSide(
+                              width: 0, style: BorderStyle.none),
+                        ),
+                        hintText: 'Password',
+                        fillColor: const Color(0xFFFFFDE4),
+                        filled: true,
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            _obscurePassword
+                                ? Icons.visibility
+                                : Icons.visibility_off,
+                            color: Colors.grey,
                           ),
-                          labelText: 'Password',
-                          fillColor: const Color(0xFFFFFDE4),
-                          filled: true),
+                          onPressed: () {
+                            setState(() {
+                              _obscurePassword = _obscurePassword;
+                            });
+                          },
+                        ),
+                      ),
                     ),
                     const SizedBox(height: 24),
                     Row(
