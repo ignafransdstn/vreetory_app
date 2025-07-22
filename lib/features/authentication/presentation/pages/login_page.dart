@@ -69,14 +69,15 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                     TextField(
                       controller: emailController,
                       decoration: InputDecoration(
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            borderSide: const BorderSide(
-                                width: 0, style: BorderStyle.none),
-                          ),
-                          hintText: 'Email',
-                          fillColor: const Color(0xFFFFFDE4),
-                          filled: true),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: const BorderSide(
+                              width: 0, style: BorderStyle.none),
+                        ),
+                        hintText: 'Email',
+                        fillColor: const Color(0xFFFFFDE4),
+                        filled: true,
+                      ),
                     ),
                     const SizedBox(height: 16),
                     TextField(
