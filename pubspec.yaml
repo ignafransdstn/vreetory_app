@@ -39,6 +39,7 @@ dependencies:
   cloud_firestore: ^4.15.4
   firebase_auth: ^4.17.4
   flutter_riverpod: ^2.6.1
+  intl: ^0.18.1
 
 dev_dependencies:
   flutter_test:
@@ -56,6 +57,7 @@ dev_dependencies:
 
 # The following section is specific to Flutter packages.
 flutter:
+
 
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
@@ -92,3 +94,4 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/custom-fonts/#from-packages
+
