@@ -3,10 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/auth_provider.dart';
 import 'login_page.dart';
 
-import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../providers/auth_provider.dart';
-import 'login_page.dart';
 import 'admin_menu_page.dart';
 import 'admin_profile_page.dart';
 
@@ -181,32 +177,3 @@ class _HomeSectionCard extends StatelessWidget {
   }
 }
 
-class _HomeBottomNavBar extends StatelessWidget {
-  const _HomeBottomNavBar();
-
-  @override
-  Widget build(BuildContext context) {
-    return BottomNavigationBar(
-      backgroundColor: const Color(0xFF4B7F52),
-      selectedItemColor: const Color(0xFFFFD93D),
-      unselectedItemColor: Colors.white,
-      items: const [
-        BottomNavigationBarItem(
-          icon: Icon(Icons.home),
-          label: 'HOME',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.menu),
-          label: 'MENU',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.person),
-          label: 'PROFILE',
-        ),
-      ],
-      currentIndex: 0,
-      onTap: (index) {},
-      type: BottomNavigationBarType.fixed,
-    );
-  }
-}
