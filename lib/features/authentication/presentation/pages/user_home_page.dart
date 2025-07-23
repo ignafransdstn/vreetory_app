@@ -3,27 +3,98 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:vreetory_app/features/authentication/presentation/pages/login_page.dart';
 import 'package:vreetory_app/features/authentication/presentation/providers/auth_provider.dart';
 
-class UserHomePage extends StatelessWidget {
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:vreetory_app/features/authentication/presentation/pages/login_page.dart';
+import 'package:vreetory_app/features/authentication/presentation/providers/auth_provider.dart';
+import 'user_menu_page.dart';
+import 'user_profile_page.dart';
+
+class UserHomePage extends ConsumerStatefulWidget {
   const UserHomePage({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return const _HomePageScaffold(userType: 'User');
-  }
+  ConsumerState<UserHomePage> createState() => _UserHomePageState();
 }
 
-class _HomePageScaffold extends ConsumerWidget {
-  final String userType;
-  const _HomePageScaffold({required this.userType});
+class _UserHomePageState extends ConsumerState<UserHomePage> {
+  int _selectedIndex = 0;
+
+  void _onNavTap(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+  }
+
+  Widget _buildHomeContent() {
+    return Column(
+      children: [
+        // Logo and App Name
+        Padding(
+          padding: const EdgeInsets.only(top: 8, bottom: 8),
+          child: Column(
+            children: [
+              Image.asset(
+                'assets/images/asset1.png',
+                width: 200,
+                height: 80,
+              ),
+              const SizedBox(height: 4),
+              const Text(
+                'Inventory App',
+                style: TextStyle(color: Colors.grey, fontSize: 12),
+              ),
+              const Text(
+                'VreeTory',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 20,
+                  color: Color(0xFF4B7F52),
+                ),
+              ),
+            ],
+          ),
+        ),
+        // Cards
+        Expanded(
+          child: ListView(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            children: const [
+              _HomeSectionCard(title: '7 Days to Expired'),
+              SizedBox(height: 16),
+              _HomeSectionCard(title: 'Today Expired'),
+              SizedBox(height: 16),
+              _HomeSectionCard(title: 'Stock Head Line'),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
+    Widget bodyContent;
+    switch (_selectedIndex) {
+      case 0:
+        bodyContent = _buildHomeContent();
+        break;
+      case 1:
+        bodyContent = const UserMenuPage();
+        break;
+      case 2:
+        bodyContent = const UserProfilePage();
+        break;
+      default:
+        bodyContent = _buildHomeContent();
+    }
+
     return Scaffold(
       backgroundColor: const Color(0xFFD6FFB7),
       appBar: AppBar(
-        title: Text(
-          '$userType Home',
-          style: const TextStyle(
+        title: const Text(
+          'User Home',
+          style: TextStyle(
             fontWeight: FontWeight.bold,
             color: Colors.white,
           ),
@@ -50,53 +121,29 @@ class _HomePageScaffold extends ConsumerWidget {
         centerTitle: true,
         elevation: 0,
       ),
-      body: SafeArea(
-        child: Column(
-          children: [
-            // Logo and App Name
-            Padding(
-              padding: const EdgeInsets.only(top: 8, bottom: 8),
-              child: Column(
-                children: [
-                  Image.asset(
-                    'assets/images/asset1.png',
-                    width: 200,
-                    height: 80,
-                  ),
-                  const SizedBox(height: 4),
-                  const Text(
-                    'Inventory App',
-                    style: TextStyle(color: Colors.grey, fontSize: 12),
-                  ),
-                  const Text(
-                    'VreeTory',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 20,
-                      color: Color(0xFF4B7F52),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            // Cards
-            Expanded(
-              child: ListView(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                children: const [
-                  _HomeSectionCard(title: '7 Days to Expired'),
-                  SizedBox(height: 16),
-                  _HomeSectionCard(title: 'Today Expired'),
-                  SizedBox(height: 16),
-                  _HomeSectionCard(title: 'Stock Head Line'),
-                ],
-              ),
-            ),
-          ],
-        ),
+      body: SafeArea(child: bodyContent),
+      bottomNavigationBar: BottomNavigationBar(
+        backgroundColor: const Color(0xFF4B7F52),
+        selectedItemColor: const Color(0xFFFFD93D),
+        unselectedItemColor: Colors.white,
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home),
+            label: 'HOME',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.menu),
+            label: 'MENU',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person),
+            label: 'PROFILE',
+          ),
+        ],
+        currentIndex: _selectedIndex,
+        onTap: _onNavTap,
+        type: BottomNavigationBarType.fixed,
       ),
-      bottomNavigationBar: const _HomeBottomNavBar(),
     );
   }
 }
