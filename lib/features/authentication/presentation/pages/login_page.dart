@@ -69,15 +69,14 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                     TextField(
                       controller: emailController,
                       decoration: InputDecoration(
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(
-                              width: 0, style: BorderStyle.none),
-                        ),
-                        hintText: 'Email',
-                        fillColor: const Color(0xFFFFFDE4),
-                        filled: true,
-                      ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: const BorderSide(
+                                width: 0, style: BorderStyle.none),
+                          ),
+                          hintText: 'Email',
+                          fillColor: const Color(0xFFFFFDE4),
+                          filled: true),
                     ),
                     const SizedBox(height: 16),
                     TextField(
@@ -95,13 +94,16 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                         suffixIcon: IconButton(
                           icon: Icon(
                             _obscurePassword
-                                ? Icons.visibility
-                                : Icons.visibility_off,
+                                ? Icons.visibility_off
+                                : Icons.visibility,
                             color: Colors.grey,
                           ),
+                          tooltip: _obscurePassword
+                              ? 'Tampilkan password'
+                              : 'Sembunyikan password',
                           onPressed: () {
                             setState(() {
-                              _obscurePassword = _obscurePassword;
+                              _obscurePassword = !_obscurePassword;
                             });
                           },
                         ),
