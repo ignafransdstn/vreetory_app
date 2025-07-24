@@ -52,7 +52,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
             children: [
               // Logo dan judul
               Image.asset('assets/images/asset1.png',
-                  width: 289, height: 250), // Ganti sesuai asset Anda
+                  width: 185, height: 185), // Ganti sesuai asset Anda
               const Text('Inventory App', style: TextStyle(color: Colors.grey)),
               const Text('VreeTory',
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22)),

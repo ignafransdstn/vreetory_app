@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-// Import tambahan untuk fitur register dan approval admin
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../data/datasources/user_remote_datasource.dart';
@@ -18,7 +17,7 @@ class RegisterPage extends StatefulWidget {
 class _RegisterPageState extends State<RegisterPage> {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
-  String selectedRole = 'User';
+  String? selectedRole;
 
   @override
   Widget build(BuildContext context) {
@@ -58,7 +57,7 @@ class _RegisterPageState extends State<RegisterPage> {
                       controller: emailController,
                       decoration: const InputDecoration(
                         border: OutlineInputBorder(),
-                        labelText: 'Email',
+                        hintText: 'Email',
                         fillColor: Color(0xFFFFFDE4),
                         filled: true,
                       ),
@@ -69,7 +68,7 @@ class _RegisterPageState extends State<RegisterPage> {
                       obscureText: true,
                       decoration: const InputDecoration(
                         border: OutlineInputBorder(),
-                        labelText: 'Password',
+                        hintText: 'Password',
                         fillColor: Color(0xFFFFFDE4),
                         filled: true,
                       ),
@@ -79,17 +78,17 @@ class _RegisterPageState extends State<RegisterPage> {
                       value: selectedRole,
                       decoration: const InputDecoration(
                         border: OutlineInputBorder(),
-                        labelText: 'Role',
                         fillColor: Color(0xFFFFFDE4),
                         filled: true,
                       ),
+                      hint: const Text('Role'),
                       items: const [
                         DropdownMenuItem(value: 'Admin', child: Text('Admin')),
                         DropdownMenuItem(value: 'User', child: Text('User')),
                       ],
                       onChanged: (value) {
                         setState(() {
-                          selectedRole = value!;
+                          selectedRole = value;
                         });
                       },
                     ),
@@ -107,12 +106,12 @@ class _RegisterPageState extends State<RegisterPage> {
                           // Logika register user baru dan approval admin
                           final email = emailController.text.trim();
                           final password = passwordController.text.trim();
-                          final role = selectedRole;
+                          final role = selectedRole ?? '';
 
                           // Validasi input sederhana
                           if (email.isEmpty || password.isEmpty) {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Email dan password wajib diisi!')),
+                              const SnackBar(content: Text('Email and password cannot be empty')),
                             );
                             return;
                           }
@@ -129,8 +128,8 @@ class _RegisterPageState extends State<RegisterPage> {
                               showDialog(
                                 context: context,
                                 builder: (context) => AlertDialog(
-                                  title: const Text('Pendaftaran Gagal'),
-                                  content: const Text('Email sudah terdaftar.'),
+                                  title: const Text('Failed to Register'),
+                                  content: const Text('Email is already registered. Please use a different email.'),
                                   actions: [
                                     TextButton(
                                       onPressed: () => Navigator.pop(context),
@@ -173,8 +172,8 @@ class _RegisterPageState extends State<RegisterPage> {
                                 showDialog(
                                   context: context,
                                   builder: (context) => AlertDialog(
-                                    title: const Text('Pendaftaran Gagal'),
-                                    content: Text(e.message ?? 'Terjadi kesalahan saat mendaftar.'),
+                                    title: const Text('Registration Failed'),
+                                    content: Text(e.message ?? 'An error occurred during registration.'),
                                     actions: [
                                       TextButton(
                                         onPressed: () => Navigator.pop(context),
@@ -221,8 +220,8 @@ class _RegisterPageState extends State<RegisterPage> {
                                   showDialog(
                                     context: context,
                                     builder: (context) => AlertDialog(
-                                      title: const Text('Menunggu Persetujuan'),
-                                      content: const Text('Akun admin Anda menunggu persetujuan admin lain. Silakan login setelah disetujui.'),
+                                      title: const Text('Wait for Approval'),
+                                      content: const Text('Your admin request has been submitted. Please wait for approval.'),
                                       actions: [
                                         TextButton(
                                           onPressed: () {
@@ -256,8 +255,8 @@ class _RegisterPageState extends State<RegisterPage> {
                             showDialog(
                               context: context,
                               builder: (context) => AlertDialog(
-                                title: const Text('Koneksi Gagal'),
-                                content: const Text('Tidak dapat terhubung ke server. Periksa koneksi internet Anda.'),
+                                title: const Text('Connection Error'),
+                                content: const Text('Please check your internet connection and try again.'),
                                 actions: [
                                   TextButton(
                                     onPressed: () => Navigator.pop(context),

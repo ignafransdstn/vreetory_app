@@ -20,8 +20,8 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Konfirmasi Approve'),
-        content: Text('Approve akun admin untuk $email?'),
+        title: const Text('Approve Admin Request'),
+        content: Text('Do you want approve $email? This user will become an admin.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -40,7 +40,7 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
       await userRef.update({'is_approved': true});
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Akun admin $email berhasil di-approve')),
+          SnackBar(content: Text('Approve Success : $email is now an admin')),
         );
       }
       setState(() {}); // Refresh list
@@ -61,9 +61,9 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
               child: Column(
                 children: [
                   Image.asset(
-                    'assets/images/asset1.png', // Replace with your illustration asset
-                    width: 180,
-                    height: 120,
+                    'assets/images/asset2.png', // Replace with your illustration asset
+                    width: 250,
+                    height: 250,
                   ),
                   const SizedBox(height: 8),
                   const Text(
@@ -91,7 +91,7 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
                   if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
                     return const Center(
                       child: Text(
-                        'Tidak ada permintaan admin baru.',
+                        'No admin requests found',
                         style: TextStyle(color: Colors.grey),
                       ),
                     );
