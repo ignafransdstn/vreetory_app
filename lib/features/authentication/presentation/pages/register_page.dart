@@ -29,7 +29,15 @@ class _RegisterPageState extends State<RegisterPage> {
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text('REGISTER', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text(
+          'REGISTER',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(
+            bottom: Radius.circular(16),
+          ),
+        ),
         centerTitle: true,
         elevation: 0,
       ),
@@ -41,8 +49,14 @@ class _RegisterPageState extends State<RegisterPage> {
               // Logo dan judul
               Image.asset('assets/images/asset1.png', width: 120, height: 100),
               const SizedBox(height: 8),
-              const Text('Inventory App', style: TextStyle(color: Colors.grey)),
-              const Text('VreeTory', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22)),
+              const Text(
+                'Inventory App',
+                style: TextStyle(color: Colors.grey),
+              ),
+              const Text(
+                'VreeTory',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22),
+              ),
               const SizedBox(height: 32),
               Container(
                 padding: const EdgeInsets.all(24),
@@ -100,7 +114,8 @@ class _RegisterPageState extends State<RegisterPage> {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFFFFD600),
                           foregroundColor: Colors.black,
-                          textStyle: const TextStyle(fontWeight: FontWeight.bold),
+                          textStyle:
+                              const TextStyle(fontWeight: FontWeight.bold),
                         ),
                         onPressed: () async {
                           // Logika register user baru dan approval admin
@@ -111,7 +126,9 @@ class _RegisterPageState extends State<RegisterPage> {
                           // Validasi input sederhana
                           if (email.isEmpty || password.isEmpty) {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Email and password cannot be empty')),
+                              const SnackBar(
+                                  content: Text(
+                                      'Email and password cannot be empty')),
                             );
                             return;
                           }
@@ -121,7 +138,8 @@ class _RegisterPageState extends State<RegisterPage> {
                             // (Sederhana: coba akses Firestore, jika error berarti tidak ada koneksi)
                             final firestore = FirebaseFirestore.instance;
                             final userRemote = UserRemoteDataSource(firestore);
-                            final isRegistered = await userRemote.isEmailRegistered(email);
+                            final isRegistered =
+                                await userRemote.isEmailRegistered(email);
 
                             if (isRegistered) {
                               // Email sudah terdaftar
@@ -129,7 +147,8 @@ class _RegisterPageState extends State<RegisterPage> {
                                 context: context,
                                 builder: (context) => AlertDialog(
                                   title: const Text('Failed to Register'),
-                                  content: const Text('Email is already registered. Please use a different email.'),
+                                  content: const Text(
+                                      'Email is already registered. Please use a different email.'),
                                   actions: [
                                     TextButton(
                                       onPressed: () => Navigator.pop(context),
@@ -144,7 +163,8 @@ class _RegisterPageState extends State<RegisterPage> {
                             if (role == 'User') {
                               // Proses register user biasa
                               try {
-                                final credential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
+                                final credential = await FirebaseAuth.instance
+                                    .createUserWithEmailAndPassword(
                                   email: email,
                                   password: password,
                                 );
@@ -165,7 +185,8 @@ class _RegisterPageState extends State<RegisterPage> {
                                   if (!mounted) return;
                                   Navigator.pushReplacement(
                                     context,
-                                    MaterialPageRoute(builder: (_) => const UserHomePage()),
+                                    MaterialPageRoute(
+                                        builder: (_) => const UserHomePage()),
                                   );
                                 }
                               } on FirebaseAuthException catch (e) {
@@ -173,7 +194,8 @@ class _RegisterPageState extends State<RegisterPage> {
                                   context: context,
                                   builder: (context) => AlertDialog(
                                     title: const Text('Registration Failed'),
-                                    content: Text(e.message ?? 'An error occurred during registration.'),
+                                    content: Text(e.message ??
+                                        'An error occurred during registration.'),
                                     actions: [
                                       TextButton(
                                         onPressed: () => Navigator.pop(context),
@@ -186,7 +208,8 @@ class _RegisterPageState extends State<RegisterPage> {
                             } else if (role == 'Admin') {
                               // Proses register admin: simpan request approval
                               try {
-                                final credential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
+                                final credential = await FirebaseAuth.instance
+                                    .createUserWithEmailAndPassword(
                                   email: email,
                                   password: password,
                                 );
@@ -194,7 +217,8 @@ class _RegisterPageState extends State<RegisterPage> {
                                 if (user != null) {
                                   // Simpan request approval ke koleksi usersRequest
                                   final firestore = FirebaseFirestore.instance;
-                                  final userRequestRemote = UserRequestRemoteDataSource(firestore);
+                                  final userRequestRemote =
+                                      UserRequestRemoteDataSource(firestore);
                                   await userRequestRemote.createUserRequest(
                                     UserRequestModel(
                                       uid: user.uid,
@@ -221,12 +245,14 @@ class _RegisterPageState extends State<RegisterPage> {
                                     context: context,
                                     builder: (context) => AlertDialog(
                                       title: const Text('Wait for Approval'),
-                                      content: const Text('Your admin request has been submitted. Please wait for approval.'),
+                                      content: const Text(
+                                          'Your admin request has been submitted. Please wait for approval.'),
                                       actions: [
                                         TextButton(
                                           onPressed: () {
                                             Navigator.pop(context);
-                                            Navigator.pop(context); // Kembali ke halaman login
+                                            Navigator.pop(
+                                                context); // Kembali ke halaman login
                                           },
                                           child: const Text('OK'),
                                         ),
@@ -239,7 +265,8 @@ class _RegisterPageState extends State<RegisterPage> {
                                   context: context,
                                   builder: (context) => AlertDialog(
                                     title: const Text('Pendaftaran Gagal'),
-                                    content: Text(e.message ?? 'Terjadi kesalahan saat mendaftar.'),
+                                    content: Text(e.message ??
+                                        'Terjadi kesalahan saat mendaftar.'),
                                     actions: [
                                       TextButton(
                                         onPressed: () => Navigator.pop(context),
@@ -256,7 +283,8 @@ class _RegisterPageState extends State<RegisterPage> {
                               context: context,
                               builder: (context) => AlertDialog(
                                 title: const Text('Connection Error'),
-                                content: const Text('Please check your internet connection and try again.'),
+                                content: const Text(
+                                    'Please check your internet connection and try again.'),
                                 actions: [
                                   TextButton(
                                     onPressed: () => Navigator.pop(context),

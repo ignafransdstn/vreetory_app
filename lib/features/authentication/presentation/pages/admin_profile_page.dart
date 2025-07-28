@@ -21,7 +21,8 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Approve Admin Request'),
-        content: Text('Do you want approve $email? This user will become an admin.'),
+        content:
+            Text('Do you want approve $email? This user will become an admin.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -54,7 +55,9 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
       body: SafeArea(
         child: Column(
           children: [
-            const SizedBox(height: 16),
+            const SizedBox(
+              height: 16,
+            ),
             // Illustration
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 8),
@@ -98,10 +101,12 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
                   }
                   final requests = snapshot.data!.docs;
                   return ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     itemCount: requests.length,
                     itemBuilder: (context, index) {
-                      final data = requests[index].data() as Map<String, dynamic>;
+                      final data =
+                          requests[index].data() as Map<String, dynamic>;
                       final email = data['email'] ?? '';
                       final requestedAt = data['requestedAt'];
                       final uid = data['uid'] ?? '';
@@ -115,7 +120,8 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
                       }
                       return Card(
                         color: const Color(0xFFFFD93D),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16)),
                         margin: const EdgeInsets.only(bottom: 16),
                         child: ListTile(
                           title: const Text(
@@ -146,7 +152,8 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
                             ],
                           ),
                           trailing: IconButton(
-                            icon: const Icon(Icons.verified, color: Color(0xFF4B7F52), size: 32),
+                            icon: const Icon(Icons.verified,
+                                color: Color(0xFF4B7F52), size: 32),
                             tooltip: 'Approve',
                             onPressed: () => _approveRequest(uid, email),
                           ),
