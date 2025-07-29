@@ -13,54 +13,48 @@ class AdminMenuPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final menuItems = [
       _MenuItem(
-        icon: Icons.add_circle_outline,
+        image: 'assets/images/asset4.png',
         label: 'ADD ITEM',
-        color: Colors.green,
         onTap: () => Navigator.push(
           context,
           MaterialPageRoute(builder: (_) => const AddItemPage()),
         ),
       ),
       _MenuItem(
-        icon: Icons.touch_app,
+        image: 'assets/images/asset5.png',
         label: 'EDIT ITEM',
-        color: Colors.amber,
         onTap: () => Navigator.push(
           context,
           MaterialPageRoute(builder: (_) => const EditItemPage()),
         ),
       ),
       _MenuItem(
-        icon: Icons.cancel,
+        image: 'assets/images/asset6.png',
         label: 'DELETE ITEM',
-        color: Colors.red,
         onTap: () => Navigator.push(
           context,
           MaterialPageRoute(builder: (_) => const DeleteItemPage()),
         ),
       ),
       _MenuItem(
-        icon: Icons.inventory_2,
+        image: 'assets/images/asset7.png',
         label: 'UPDATE STOCK',
-        color: Colors.blue,
         onTap: () => Navigator.push(
           context,
           MaterialPageRoute(builder: (_) => const UpdateStockPage()),
         ),
       ),
       _MenuItem(
-        icon: Icons.list_alt,
+        image: 'assets/images/asset8.png',
         label: 'LIST ITEM STOCK',
-        color: Colors.black,
         onTap: () => Navigator.push(
           context,
           MaterialPageRoute(builder: (_) => const ListItemStockPage()),
         ),
       ),
       _MenuItem(
-        icon: Icons.monitor,
+        image: 'assets/images/asset9.png',
         label: 'REPORTING',
-        color: Colors.orange,
         onTap: () => Navigator.push(
           context,
           MaterialPageRoute(builder: (_) => const ReportingPage()),
@@ -73,7 +67,6 @@ class AdminMenuPage extends StatelessWidget {
       body: SafeArea(
         child: Column(
           children: [
-            const SizedBox(height: 16),
             // Logo and App Name
             Padding(
               padding: const EdgeInsets.only(top: 8, bottom: 8),
@@ -119,15 +112,13 @@ class AdminMenuPage extends StatelessWidget {
 }
 
 class _MenuItem {
-  final IconData icon;
+  final String image;
   final String label;
-  final Color color;
   final VoidCallback onTap;
 
   _MenuItem({
-    required this.icon,
+    required this.image,
     required this.label,
-    required this.color,
     required this.onTap,
   });
 }
@@ -144,10 +135,22 @@ class _MenuButton extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          CircleAvatar(
-            radius: 44,
-            backgroundColor: item.color.withOpacity(0.15),
-            child: Icon(item.icon, size: 56, color: item.color),
+          Container(
+            width: 88,
+            height: 88,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.white.withOpacity(0.15),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Image.asset(
+                item.image,
+                fit: BoxFit.contain,
+                width: 64,
+                height: 64,
+              ),
+            ),
           ),
           const SizedBox(height: 12),
           Text(
