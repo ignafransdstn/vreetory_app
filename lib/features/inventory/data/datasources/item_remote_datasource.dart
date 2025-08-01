@@ -20,4 +20,26 @@ class ItemRemoteDataSource {
       return null;
     }
   }
+  Future<List<ItemModel>> getAllItems() async {
+    final querySnapshot = await firestore.collection('items').get();
+    return querySnapshot.docs
+        .map((doc) => ItemModel.fromJson(doc.data()))
+        .toList();
+  }
+
+  Future<void> updateItem(ItemModel item) async {
+    await firestore.collection('items').doc(item.uid).update(item.toJson());
+  }
+
+  Future<void> deleteItem(String uid) async {
+    await firestore.collection('items').doc(uid).delete();
+  }
+
+  Future<bool> isItemCodeRegistered(String itemCode) async {
+    final querySnapshot = await firestore
+        .collection('items')
+        .where('itemCode', isEqualTo: itemCode)
+        .get();
+    return querySnapshot.docs.isNotEmpty;
+  }
 }
