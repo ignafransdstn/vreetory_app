@@ -44,19 +44,34 @@ class ItemRepositoryImpl implements ItemRepository {
   
   @override
   Future<void> deleteItem(String uid) {
-    // TODO: implement deleteItem
-    throw UnimplementedError();
+    return remoteDataSource.deleteItem(uid);
   }
   
   @override
   Future<List<ItemEntity>> getAllItems() {
-    // TODO: implement getAllItems
-    throw UnimplementedError();
+    return remoteDataSource.getAllItems();
   }
   
   @override
   Future<void> updateItem(ItemEntity item) {
-    // TODO: implement updateItem
-    throw UnimplementedError();
+    final model = ItemModel(
+      uid: item.uid,
+      itemName: item.itemName,
+      itemCode: item.itemCode,
+      category: item.category,
+      quantity: item.quantity,
+      buyRate: item.buyRate,
+      sellRate: item.sellRate,
+      expiredDate: item.expiredDate,
+      measure: item.measure,
+      supplier: item.supplier,
+      description: item.description,
+      imageUrl: item.imageUrl,
+      status: item.status,
+      createdBy: item.createdBy,
+      createdAt: item.createdAt,
+      updatedAt: item.updatedAt,
+    );
+    return remoteDataSource.updateItem(model);
   }
 }
