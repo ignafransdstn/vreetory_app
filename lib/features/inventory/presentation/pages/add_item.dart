@@ -13,6 +13,38 @@ class AddItemPage extends ConsumerStatefulWidget {
 }
 
 class _AddItemPageState extends ConsumerState<AddItemPage> {
+  @override
+  void initState() {
+    super.initState();
+    _itemNameController.addListener(() {
+      if (_itemNameError && _itemNameController.text.isNotEmpty) {
+        setState(() {
+          _itemNameError = false;
+        });
+      }
+    });
+    _buyRateController.addListener(() {
+      if (_buyRateError && _buyRateController.text.isNotEmpty) {
+        setState(() {
+          _buyRateError = false;
+        });
+      }
+    });
+    _sellRateController.addListener(() {
+      if (_sellRateError && _sellRateController.text.isNotEmpty) {
+        setState(() {
+          _sellRateError = false;
+        });
+      }
+    });
+    _expiredDateController.addListener(() {
+      if (_expiredDateError && _expiredDateController.text.isNotEmpty) {
+        setState(() {
+          _expiredDateError = false;
+        });
+      }
+    });
+  }
   final _formKey = GlobalKey<FormState>();
   final _itemNameController = TextEditingController();
   final _itemCodeController = TextEditingController();
@@ -27,6 +59,14 @@ class _AddItemPageState extends ConsumerState<AddItemPage> {
   String? _selectedMeasure;
   bool _status = true;
 
+  // State for label color
+  bool _itemNameError = false;
+  bool _categoryError = false;
+  bool _buyRateError = false;
+  bool _sellRateError = false;
+  bool _expiredDateError = false;
+  bool _measureError = false;
+
   String generateRandomCode() {
     const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
     return List.generate(6, (index) {
@@ -40,46 +80,129 @@ class _AddItemPageState extends ConsumerState<AddItemPage> {
     final itemNotifier = ref.read(itemProvider.notifier);
     final authState = ref.read(authProvider);
 
-    if (_formKey.currentState?.validate() ?? false) {
-      final now = DateTime.now();
-      final createdBy = authState.user?.email ?? '';
-      String itemCode = _itemCodeController.text.trim();
-      if (itemCode.isEmpty) {
-        itemCode = generateRandomCode();
-      }
-      final item = ItemEntity(
-        uid: '', // UID akan di-generate oleh Firestore, leave empty here
-        itemName: _itemNameController.text.trim(),
-        itemCode: itemCode,
-        category: _selectedCategory ?? '',
-        quantity: _quantityController.text.trim(),
-        buyRate: _buyRateController.text.trim(),
-        sellRate: _sellRateController.text.trim(),
-        expiredDate: _expiredDateController.text.trim(),
-        measure: _selectedMeasure ?? '',
-        supplier: _supplierController.text.trim(),
-        description: _descriptionController.text.trim(),
-        imageUrl: '', // default, no image in form
-        status: _status ? 'active' : 'inactive',
-        createdBy: createdBy,
-        createdAt: now,
-        updatedAt: now,
+    setState(() {
+      _itemNameError = _itemNameController.text.trim().isEmpty;
+      _categoryError = _selectedCategory == null || _selectedCategory!.isEmpty;
+      _buyRateError = _buyRateController.text.trim().isEmpty;
+      _sellRateError = _sellRateController.text.trim().isEmpty;
+      _expiredDateError = _expiredDateController.text.trim().isEmpty;
+      _measureError = _selectedMeasure == null || _selectedMeasure!.isEmpty;
+    });
+
+    if (_itemNameError || _categoryError || _buyRateError || _sellRateError || _expiredDateError || _measureError) {
+      await showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Peringatan'),
+          content: const Text('Kolom mandatory masih belum terisi, silahkan isi data yang di butuhkan pada kolom'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('OK'),
+            ),
+          ],
+        ),
       );
-      await itemNotifier.createNewItem(item);
-      if (context.mounted && itemState.isSuccess) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Item created successfully')),
-        );
-        Navigator.pop(context);
-      }
+      return;
+    }
+
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Konfirmasi'),
+        content: const Text('Apakah Anda yakin ingin menambah item ini?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Batal'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+    if (confirm != true) return;
+
+    final now = DateTime.now();
+    final createdBy = authState.user?.email ?? '';
+    String itemCode = _itemCodeController.text.trim();
+    if (itemCode.isEmpty) {
+      itemCode = generateRandomCode();
+    }
+    final item = ItemEntity(
+      uid: '', // UID akan di-generate oleh Firestore, leave empty here
+      itemName: _itemNameController.text.trim(),
+      itemCode: itemCode,
+      category: _selectedCategory ?? '',
+      quantity: _quantityController.text.trim(),
+      buyRate: _buyRateController.text.trim(),
+      sellRate: _sellRateController.text.trim(),
+      expiredDate: _expiredDateController.text.trim(),
+      measure: _selectedMeasure ?? '',
+      supplier: _supplierController.text.trim(),
+      description: _descriptionController.text.trim(),
+      imageUrl: '', // default, no image in form. Will be handled later
+      status: _status ? 'active' : 'inactive',
+      createdBy: createdBy,
+      createdAt: now,
+      updatedAt: now,
+    );
+    await itemNotifier.createNewItem(item);
+    if (context.mounted && itemState.isSuccess) {
+      await showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Sukses'),
+          content: const Text('Data berhasil dikirim!'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('OK'),
+            ),
+          ],
+        ),
+      );
+      if (context.mounted) Navigator.pop(context);
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final itemState = ref.watch(itemProvider);
-    final itemNotifier = ref.read(itemProvider.notifier);
     final authState = ref.watch(authProvider);
+
+    if (authState.status == AuthStatus.initial || authState.status == AuthStatus.loading) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (authState.user == null) {
+      return Scaffold(
+        backgroundColor: const Color(0xFFD6FFB7),
+        appBar: AppBar(
+          backgroundColor: const Color(0xFF4B7F52),
+          title: const Text('ADD ITEM'),
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () => Navigator.pop(context),
+          ),
+          centerTitle: true,
+        ),
+        body: const Center(
+          child: Padding(
+            padding: EdgeInsets.all(24),
+            child: Text(
+              'You must be logged in to add an item.',
+              style: TextStyle(color: Colors.red, fontSize: 16),
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ),
+      );
+    }
 
     return Scaffold(
       backgroundColor: const Color(0xFFD6FFB7),
@@ -108,41 +231,59 @@ class _AddItemPageState extends ConsumerState<AddItemPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    _label('ITEM NAME'),
+                    _label('ITEM NAME', error: _itemNameError),
                     TextFormField(
                       controller: _itemNameController,
-                      decoration: _inputDecoration('Enter input here'),
-                      validator: (v) => v == null || v.isEmpty ? 'Fill the item name' : null,
+                      decoration: _inputDecoration('Enter input here').copyWith(
+                        errorText: _itemNameError ? 'Fill the item name' : null,
+                      ),
+                      validator: (v) => v == null || v.isEmpty ? '' : null,
                     ),
                     _helper('Fill the item name'),
                     const SizedBox(height: 16),
                     _label('ITEM CODE'),
                     TextFormField(
                       controller: _itemCodeController,
-                      decoration: _inputDecoration('Enter input here'),
+                      decoration: _inputDecoration('Enter input here').copyWith(
+                        errorText: (_formKey.currentState != null && !_formKey.currentState!.validate() && _itemCodeController.text.isNotEmpty && !RegExp(r'^[a-z0-9]{6}$').hasMatch(_itemCodeController.text))
+                            ? 'Item code must be 6 chars, lowercase letters & digits'
+                            : null,
+                      ),
                       validator: (v) {
                         final value = v ?? '';
                         final regex = RegExp(r'^[a-z0-9]{6}$');
                         if (value.isEmpty) return null; // Will be generated if empty
                         if (!regex.hasMatch(value)) {
-                          return 'Item code must be 6 chars, lowercase letters & digits';
+                          return '';
                         }
                         return null;
                       },
                     ),
                     _helper('Fill item code (*optional)'),
                     const SizedBox(height: 16),
-                    _label('CATEGORY'),
+                    _label('CATEGORY', error: _categoryError),
                     DropdownButtonFormField<String>(
                       value: _selectedCategory,
-                      decoration: _inputDecoration('Select input here'),
+                      decoration: _inputDecoration('Select input here').copyWith(
+                        errorText: _categoryError ? 'Select category' : null,
+                      ),
                       items: const [
-                        DropdownMenuItem(value: 'Category1', child: Text('Category1')),
-                        DropdownMenuItem(value: 'Category2', child: Text('Category2')),
+                        DropdownMenuItem(value: 'Food', child: Text('Food')),
+                        DropdownMenuItem(value: 'Fruit', child: Text('Fruit')),
+                        DropdownMenuItem(value: 'Drink', child: Text('Drink')),
+                        DropdownMenuItem(value: 'Vegetable', child: Text('Vegetable')),
+                        DropdownMenuItem(value: 'Parcel', child: Text('Parcel')),
                         // Tambahkan opsi lain sesuai kebutuhan
                       ],
-                      onChanged: (v) => setState(() => _selectedCategory = v),
-                      validator: (v) => v == null || v.isEmpty ? 'Select category' : null,
+                      onChanged: (v) {
+                        setState(() {
+                          _selectedCategory = v;
+                          if (_categoryError && v != null && v.isNotEmpty) {
+                            _categoryError = false;
+                          }
+                        });
+                      },
+                      validator: (v) => v == null || v.isEmpty ? '' : null,
                     ),
                     _helper('Select category'),
                     const SizedBox(height: 16),
@@ -154,28 +295,34 @@ class _AddItemPageState extends ConsumerState<AddItemPage> {
                     ),
                     _helper('Fill quantity (*optional)'),
                     const SizedBox(height: 16),
-                    _label('BUY RATE'),
+                    _label('BUY RATE', error: _buyRateError),
                     TextFormField(
                       controller: _buyRateController,
-                      decoration: _inputDecoration('Enter input here'),
+                      decoration: _inputDecoration('Enter input here').copyWith(
+                        errorText: _buyRateError ? 'Fill buy price' : null,
+                      ),
                       keyboardType: TextInputType.number,
-                      validator: (v) => v == null || v.isEmpty ? 'Fill buy price' : null,
+                      validator: (v) => v == null || v.isEmpty ? '' : null,
                     ),
                     _helper('Fill buy price'),
                     const SizedBox(height: 16),
-                    _label('SALE RATE'),
+                    _label('SALE RATE', error: _sellRateError),
                     TextFormField(
                       controller: _sellRateController,
-                      decoration: _inputDecoration('Enter input here'),
+                      decoration: _inputDecoration('Enter input here').copyWith(
+                        errorText: _sellRateError ? 'Fill sell price' : null,
+                      ),
                       keyboardType: TextInputType.number,
-                      validator: (v) => v == null || v.isEmpty ? 'Fill sell price' : null,
+                      validator: (v) => v == null || v.isEmpty ? '' : null,
                     ),
                     _helper('Fill sell price'),
                     const SizedBox(height: 16),
-                    _label('EXPIRED DATE'),
+                    _label('EXPIRED DATE', error: _expiredDateError),
                     TextFormField(
                       controller: _expiredDateController,
-                      decoration: _inputDecoration('DD/MM/YYYY'),
+                      decoration: _inputDecoration('DD/MM/YYYY').copyWith(
+                        errorText: _expiredDateError ? 'Select date of item expired' : null,
+                      ),
                       readOnly: true,
                       onTap: () async {
                         final picked = await showDatePicker(
@@ -186,23 +333,40 @@ class _AddItemPageState extends ConsumerState<AddItemPage> {
                         );
                         if (picked != null) {
                           _expiredDateController.text = DateFormat('dd/MM/yyyy').format(picked);
+                          if (_expiredDateError) {
+                            setState(() {
+                              _expiredDateError = false;
+                            });
+                          }
                         }
                       },
-                      validator: (v) => v == null || v.isEmpty ? 'Select date of item expired' : null,
+                      validator: (v) => v == null || v.isEmpty ? '' : null,
                     ),
                     _helper('Select date of item expired'),
                     const SizedBox(height: 16),
-                    _label('MEASURE'),
+                    _label('MEASURE', error: _measureError),
                     DropdownButtonFormField<String>(
                       value: _selectedMeasure,
-                      decoration: _inputDecoration('Enter input here'),
+                      decoration: _inputDecoration('Enter input here').copyWith(
+                        errorText: _measureError ? 'Select measure' : null,
+                      ),
                       items: const [
-                        DropdownMenuItem(value: 'Measure1', child: Text('Measure1')),
-                        DropdownMenuItem(value: 'Measure2', child: Text('Measure2')),
+                        DropdownMenuItem(value: 'PCS', child: Text('PCS')),
+                        DropdownMenuItem(value: 'KG', child: Text('KG')),
+                        DropdownMenuItem(value: 'ML', child: Text('ML')),
+                        DropdownMenuItem(value: 'LITER', child: Text('LITER')),
+                        DropdownMenuItem(value: 'BOX', child: Text('BOX')),
                         // Tambahkan opsi lain sesuai kebutuhan
                       ],
-                      onChanged: (v) => setState(() => _selectedMeasure = v),
-                      validator: (v) => v == null || v.isEmpty ? 'Select measure' : null,
+                      onChanged: (v) {
+                        setState(() {
+                          _selectedMeasure = v;
+                          if (_measureError && v != null && v.isNotEmpty) {
+                            _measureError = false;
+                          }
+                        });
+                      },
+                      validator: (v) => v == null || v.isEmpty ? '' : null,
                     ),
                     _helper('Select measure'),
                     const SizedBox(height: 16),
@@ -239,7 +403,20 @@ class _AddItemPageState extends ConsumerState<AddItemPage> {
                       ),
                       onPressed: itemState.isLoading
                           ? null
-                          : handleSubmit,
+                          : () async {
+                              final authState = ref.read(authProvider);
+                              final createdBy = authState.user?.email ?? '';
+                              if (createdBy.isEmpty) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('You must be logged in to add an item.'),
+                                    backgroundColor: Colors.red,
+                                  ),
+                                );
+                                return;
+                              }
+                              await handleSubmit();
+                            },
                       child: itemState.isLoading
                           ? const CircularProgressIndicator()
                           : const Text('SUBMIT DATA'),
@@ -262,12 +439,12 @@ class _AddItemPageState extends ConsumerState<AddItemPage> {
     );
   }
 
-  Widget _label(String text) => Padding(
+  Widget _label(String text, {bool error = false}) => Padding(
         padding: const EdgeInsets.only(bottom: 4),
         child: Text(
           text,
-          style: const TextStyle(
-            color: Colors.white,
+          style: TextStyle(
+            color: error ? Colors.red : Colors.white,
             fontWeight: FontWeight.bold,
             fontSize: 14,
             letterSpacing: 1,

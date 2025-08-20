@@ -32,7 +32,31 @@ class AuthState {
 }
 
 class AuthNotifier extends StateNotifier<AuthState> {
-  AuthNotifier() : super(AuthState());
+  AuthNotifier() : super(AuthState()) {
+    initializeSession();
+  }
+
+  Future<void> initializeSession() async {
+    final firebaseUser = FirebaseAuth.instance.currentUser;
+    if (firebaseUser != null) {
+      final firestore = FirebaseFirestore.instance;
+      final doc = await firestore.collection('users').doc(firebaseUser.uid).get();
+      if (doc.exists) {
+        final data = doc.data()!;
+        final userEntity = UserEntity(
+          uid: data['uid'],
+          email: data['email'],
+          role: data['role'],
+          adminRequest: data.containsKey('adminRequest') ? data['adminRequest'] : false,
+          isApproved: data.containsKey('isApproved') ? data['isApproved'] : false,
+          createdAt: data.containsKey('createdAt') && data['createdAt'] is Timestamp
+              ? (data['createdAt'] as Timestamp).toDate()
+              : DateTime.now(),
+        );
+        state = state.copyWith(status: AuthStatus.authenticated, user: userEntity, error: null);
+      }
+    }
+  }
 
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;

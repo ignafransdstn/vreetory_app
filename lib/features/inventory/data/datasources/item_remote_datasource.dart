@@ -7,9 +7,15 @@ class ItemRemoteDataSource {
   ItemRemoteDataSource(this.firestore);
 
   Future<void> createItem(ItemModel item) async {
-    await firestore.collection('items').doc(item.uid).set(
-          item.toJson(),
-        );
+    if (item.uid.isEmpty) {
+      // Add new item, let Firestore generate the ID
+      final docRef = await firestore.collection('items').add(item.toJson());
+      // Update the document with the generated ID as uid
+      await docRef.update({'uid': docRef.id});
+    } else {
+      // Use provided uid (for update or custom ID)
+      await firestore.collection('items').doc(item.uid).set(item.toJson());
+    }
   }
 
   Future<ItemModel?> getItem(String uid) async {
