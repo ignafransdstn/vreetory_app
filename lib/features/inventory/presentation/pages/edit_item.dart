@@ -96,7 +96,7 @@ class _EditItemPageState extends ConsumerState<EditItemPage> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  (item.status ?? '').toUpperCase(),
+                                  (item.status).toUpperCase(),
                                   style: TextStyle(
                                     color: item.status == 'active'
                                         ? Colors.green[800]

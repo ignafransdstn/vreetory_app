@@ -67,7 +67,7 @@ class _EditItemFieldPageState extends ConsumerState<EditItemFieldPage> {
 
   Future<void> handleUpdate() async {
     final itemNotifier = ref.read(itemProvider.notifier);
-    final authState = ref.read(authProvider);
+    ref.read(authProvider);
 
     setState(() {
       _itemNameError = _itemNameController.text.trim().isEmpty;
@@ -115,7 +115,6 @@ class _EditItemFieldPageState extends ConsumerState<EditItemFieldPage> {
     if (confirm != true) return;
 
     final now = DateTime.now();
-    final updatedBy = authState.user?.email ?? '';
     final updatedItem = ItemEntity(
       uid: widget.item.uid,
       itemName: _itemNameController.text.trim(),
