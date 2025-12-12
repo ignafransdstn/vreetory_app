@@ -1,6 +1,9 @@
+// ignore_for_file: use_build_context_synchronously
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import '../../../../core/theme/app_theme.dart';
+import '../../../../core/widgets/animated_button.dart';
 import '../../domain/entities/item_entity.dart';
 import '../provider/item_provider.dart';
 import '../../../authentication/presentation/providers/auth_provider.dart';
@@ -17,6 +20,7 @@ class _EditItemFieldPageState extends ConsumerState<EditItemFieldPage> {
   late final TextEditingController _itemNameController;
   late final TextEditingController _itemCodeController;
   late final TextEditingController _quantityController;
+  late final TextEditingController _minimumStockController;
   late final TextEditingController _buyRateController;
   late final TextEditingController _sellRateController;
   late final TextEditingController _expiredDateController;
@@ -42,6 +46,7 @@ class _EditItemFieldPageState extends ConsumerState<EditItemFieldPage> {
     _itemNameController = TextEditingController(text: item.itemName);
     _itemCodeController = TextEditingController(text: item.itemCode);
     _quantityController = TextEditingController(text: item.quantity);
+    _minimumStockController = TextEditingController(text: item.minimumStock);
     _buyRateController = TextEditingController(text: item.buyRate);
     _sellRateController = TextEditingController(text: item.sellRate);
     _expiredDateController = TextEditingController(text: item.expiredDate);
@@ -57,6 +62,7 @@ class _EditItemFieldPageState extends ConsumerState<EditItemFieldPage> {
     _itemNameController.dispose();
     _itemCodeController.dispose();
     _quantityController.dispose();
+    _minimumStockController.dispose();
     _buyRateController.dispose();
     _sellRateController.dispose();
     _expiredDateController.dispose();
@@ -67,7 +73,6 @@ class _EditItemFieldPageState extends ConsumerState<EditItemFieldPage> {
 
   Future<void> handleUpdate() async {
     final itemNotifier = ref.read(itemProvider.notifier);
-    ref.read(authProvider);
 
     setState(() {
       _itemNameError = _itemNameController.text.trim().isEmpty;
@@ -115,12 +120,55 @@ class _EditItemFieldPageState extends ConsumerState<EditItemFieldPage> {
     if (confirm != true) return;
 
     final now = DateTime.now();
+    final authState = ref.read(authProvider);
+    
+    // Check if user is trying to update quantity on inactive item (only admin can do this)
+    final quantityChanged = _quantityController.text.trim() != widget.item.quantity;
+    if (authState.user?.role == 'user' && widget.item.status == 'inactive' && quantityChanged) {
+      await showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Akses Ditolak'),
+          content: const Text('User tidak memiliki izin untuk mengubah quantity item yang inactive. Hanya admin yang dapat mengubah quantity item inactive.'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('OK'),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
+    
+    // Check if user is trying to change status (only admin can change status)
+    if (authState.user?.role == 'user' && _status != (widget.item.status == 'active')) {
+      await showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Akses Ditolak'),
+          content: const Text('User tidak memiliki izin untuk mengubah status item. Hanya admin yang dapat mengubah status.'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('OK'),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
+    
+    final updatedBy = authState.user?.email ?? widget.item.updatedBy;
+    
     final updatedItem = ItemEntity(
       uid: widget.item.uid,
       itemName: _itemNameController.text.trim(),
       itemCode: _itemCodeController.text.trim(),
       category: _selectedCategory ?? '',
       quantity: _quantityController.text.trim(),
+      previousQuantity: quantityChanged ? widget.item.quantity : widget.item.previousQuantity,
+      minimumStock: _minimumStockController.text.trim().isEmpty ? '0' : _minimumStockController.text.trim(),
       buyRate: _buyRateController.text.trim(),
       sellRate: _sellRateController.text.trim(),
       expiredDate: _expiredDateController.text.trim(),
@@ -130,8 +178,10 @@ class _EditItemFieldPageState extends ConsumerState<EditItemFieldPage> {
       imageUrl: widget.item.imageUrl,
       status: _status ? 'active' : 'inactive',
       createdBy: widget.item.createdBy,
+      updatedBy: updatedBy,
       createdAt: widget.item.createdAt,
       updatedAt: now,
+      quantityChangeReason: widget.item.quantityChangeReason,
     );
     await itemNotifier.updateExistingItem(updatedItem);
     if (context.mounted) {
@@ -154,10 +204,15 @@ class _EditItemFieldPageState extends ConsumerState<EditItemFieldPage> {
 
   @override
   Widget build(BuildContext context) {
+    final authState = ref.watch(authProvider);
+    final userRole = authState.user?.role;
+    final isItemInactive = widget.item.status == 'inactive';
+    final canUserEdit = userRole == 'admin' || (userRole == 'user' && !isItemInactive);
+
     return Scaffold(
-      backgroundColor: const Color(0xFFD6FFB7),
+      backgroundColor: AppTheme.ivoryWhite,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF4B7F52),
+        backgroundColor: AppTheme.darkGreen,
         title: const Text('EDIT ITEM FIELD'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
@@ -173,11 +228,19 @@ class _EditItemFieldPageState extends ConsumerState<EditItemFieldPage> {
               padding: const EdgeInsets.all(24),
               width: 400,
               decoration: BoxDecoration(
-                color: const Color(0xFF27632A),
+                color: AppTheme.darkGreen,
                 borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppTheme.limeGreen.withValues(alpha: 0.2),
+                    blurRadius: 8,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
+              child: canUserEdit
+                  ? Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   _label('ITEM NAME', error: _itemNameError),
                   TextFormField(
@@ -214,8 +277,18 @@ class _EditItemFieldPageState extends ConsumerState<EditItemFieldPage> {
                     controller: _quantityController,
                     decoration: _inputDecoration('Enter input here'),
                     keyboardType: TextInputType.number,
+                    enabled: canUserEdit,
+                    onChanged: canUserEdit ? null : (_) {},
                   ),
                   _helper('Fill quantity (*optional)'),
+                  const SizedBox(height: 16),
+                  _label('MINIMUM STOCK'),
+                  TextFormField(
+                    controller: _minimumStockController,
+                    decoration: _inputDecoration('Enter input here'),
+                    keyboardType: TextInputType.number,
+                  ),
+                  _helper('Fill minimum stock threshold (*optional)'),
                   const SizedBox(height: 16),
                   _label('BUY RATE', error: _buyRateError),
                   TextFormField(
@@ -239,9 +312,17 @@ class _EditItemFieldPageState extends ConsumerState<EditItemFieldPage> {
                     decoration: _inputDecoration('DD/MM/YYYY'),
                     readOnly: true,
                     onTap: () async {
+                      // Parse current date or use today if invalid
+                      DateTime initialDate = DateTime.now();
+                      try {
+                        initialDate = DateFormat('dd/MM/yyyy').parse(_expiredDateController.text.trim());
+                      } catch (e) {
+                        initialDate = DateTime.now();
+                      }
+                      
                       final picked = await showDatePicker(
                         context: context,
-                        initialDate: DateTime.now(),
+                        initialDate: initialDate,
                         firstDate: DateTime(2020),
                         lastDate: DateTime(2100),
                       );
@@ -283,27 +364,58 @@ class _EditItemFieldPageState extends ConsumerState<EditItemFieldPage> {
                   ),
                   _helper('Fill item description (*optional)'),
                   const SizedBox(height: 16),
-                  _label('STATUS'),
-                  CheckboxListTile(
-                    value: _status,
-                    onChanged: (v) => setState(() => _status = v ?? true),
-                    title: const Text('Check for active status item or uncheck for inactive status item', style: TextStyle(color: Colors.white)),
-                    controlAffinity: ListTileControlAffinity.leading,
-                    contentPadding: EdgeInsets.zero,
-                  ),
+                  _buildStatusSection(),
                   const SizedBox(height: 24),
-                  ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFFFD600),
-                      foregroundColor: Colors.black,
-                      textStyle: const TextStyle(fontWeight: FontWeight.bold),
-                      minimumSize: const Size.fromHeight(48),
+                  SizedBox(
+                    width: double.infinity,
+                    child: AnimatedOutlinedButton(
+                      label: 'UPDATE DATA',
+                      borderColor: AppTheme.brightYellow,
+                      textColor: AppTheme.brightYellow,
+                      onPressed: handleUpdate,
                     ),
-                    onPressed: handleUpdate,
-                    child: const Text('UPDATE DATA'),
                   ),
-                ],
-              ),
+                ]
+                  )
+                  : Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.lock,
+                          size: 64,
+                          color: Colors.red[800],
+                        ),
+                        const SizedBox(height: 16),
+                        const Text(
+                          'Access Denied',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        const Text(
+                          'Items with INACTIVE status cannot be modified by regular users.\n\nContact the administrator to activate this item.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: Colors.white70,
+                            fontSize: 14,
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                        SizedBox(
+                          width: double.infinity,
+                          child: AnimatedOutlinedButton(
+                            label: 'BACK',
+                            borderColor: AppTheme.brightYellow,
+                            textColor: AppTheme.brightYellow,
+                            onPressed: () => Navigator.pop(context),
+                          ),
+                        ),
+                      ],
+                    ),
             ),
           ),
         ),
@@ -312,28 +424,76 @@ class _EditItemFieldPageState extends ConsumerState<EditItemFieldPage> {
   }
 
   Widget _label(String text, {bool error = false}) => Padding(
-        padding: const EdgeInsets.only(bottom: 4),
+        padding: const EdgeInsets.only(bottom: 8),
         child: Text(
           text,
           style: TextStyle(
-            color: error ? Colors.red : Colors.white,
+            color: error ? Colors.red : AppTheme.brightYellow,
             fontWeight: FontWeight.bold,
             fontSize: 14,
-            letterSpacing: 1,
+            letterSpacing: 1.2,
           ),
         ),
       );
 
   Widget _helper(String text) => Padding(
-        padding: const EdgeInsets.only(bottom: 8, left: 2),
+        padding: const EdgeInsets.only(bottom: 12, left: 2),
         child: Text(
           text,
-          style: const TextStyle(
-            color: Colors.white70,
-            fontSize: 11,
+          style: TextStyle(
+            color: Colors.grey[400],
+            fontSize: 12,
           ),
         ),
       );
+
+  Widget _buildStatusSection() {
+    final authState = ref.watch(authProvider);
+    final userRole = authState.user?.role;
+    final isAdmin = userRole == 'admin';
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _label('STATUS'),
+        if (isAdmin)
+          CheckboxListTile(
+            value: _status,
+            onChanged: (v) => setState(() => _status = v ?? true),
+            title: const Text('Check for active status item or uncheck for inactive status item', style: TextStyle(color: Colors.white)),
+            controlAffinity: ListTileControlAffinity.leading,
+            contentPadding: EdgeInsets.zero,
+          )
+        else
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.grey[700],
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    _status ? 'ACTIVE' : 'INACTIVE',
+                    style: TextStyle(
+                      color: _status ? AppTheme.limeGreen : Colors.red[800],
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
+                  ),
+                ),
+                Icon(
+                  _status ? Icons.check_circle : Icons.cancel,
+                  color: _status ? AppTheme.limeGreen : Colors.red[800],
+                ),
+              ],
+            ),
+          ),
+        _helper(isAdmin ? 'Check for active status item or uncheck for inactive status item' : 'Status item (User tidak dapat mengubah status)'),
+      ],
+    );
+  }
 
   InputDecoration _inputDecoration(String hint) => InputDecoration(
         hintText: hint,

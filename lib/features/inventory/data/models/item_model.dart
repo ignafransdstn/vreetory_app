@@ -8,6 +8,8 @@ class ItemModel extends ItemEntity {
       required super.itemCode,
       required super.category,
       required super.quantity,
+      required super.previousQuantity,
+      required super.minimumStock,
       required super.buyRate,
       required super.sellRate,
       required super.expiredDate,
@@ -17,16 +19,21 @@ class ItemModel extends ItemEntity {
       required super.imageUrl,
       required super.status,
       required super.createdBy,
+      required super.updatedBy,
       required super.createdAt,
-      required super.updatedAt});
+      required super.updatedAt,
+      super.quantityChangeReason});
 
   factory ItemModel.fromJson(Map<String, dynamic> json) {
+    final quantity = json['quantity'] ?? '';
     return ItemModel(
       uid: json['uid'],
       itemName: json['item_name'],
       itemCode: json['item_code'],
       category: json['category'],
-      quantity: json['quantity'],
+      quantity: quantity,
+      previousQuantity: json['previous_quantity'] ?? quantity, // Default to current quantity if not set (backward compatibility)
+      minimumStock: json['minimum_stock'] ?? '0', // Default to 0 if not set (backward compatibility)
       buyRate: json['buy_rate'],
       sellRate: json['sell_rate'],
       expiredDate: json['expired_date'],
@@ -36,8 +43,10 @@ class ItemModel extends ItemEntity {
       imageUrl: json['image_url'],
       status: json['status'],
       createdBy: json['created_by'],
+      updatedBy: json['updated_by'] ?? json['created_by'], // Default to createdBy if not set (backward compatibility)
       createdAt: (json['created_at'] as Timestamp).toDate(),
       updatedAt: (json['updated_at'] as Timestamp).toDate(),
+      quantityChangeReason: json['quantity_change_reason'],
     );
   }
 
@@ -47,6 +56,8 @@ class ItemModel extends ItemEntity {
     'item_code' : itemCode,
     'category' : category,
     'quantity' : quantity,
+    'previous_quantity' : previousQuantity,
+    'minimum_stock' : minimumStock,
     'buy_rate' : buyRate,
     'sell_rate' : sellRate,
     'expired_date' : expiredDate,
@@ -56,7 +67,9 @@ class ItemModel extends ItemEntity {
     'image_url' : imageUrl,
     'status' : status,
     'created_by' : createdBy,
+    'updated_by' : updatedBy,
     'created_at' : createdAt,
     'updated_at' : updatedAt,
+    'quantity_change_reason' : quantityChangeReason,
   };
 }

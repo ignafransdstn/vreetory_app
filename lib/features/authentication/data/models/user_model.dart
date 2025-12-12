@@ -9,6 +9,9 @@ class UserModel extends UserEntity {
     required super.adminRequest,
     required super.isApproved,
     required super.createdAt,
+    super.approvedAt,
+    super.name,
+    super.phone,
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
@@ -19,6 +22,9 @@ class UserModel extends UserEntity {
       adminRequest: json['admin_request'],
       isApproved: json['is_approved'] as bool?,
       createdAt: (json['created_at'] as Timestamp).toDate(),
+      approvedAt: json['approved_at'] != null ? (json['approved_at'] as Timestamp).toDate() : null,
+      name: json['name'] as String?,
+      phone: json['phone'] as String?,
     );
   }
 
@@ -28,6 +34,9 @@ class UserModel extends UserEntity {
     'role' : role,
     'admin_request' : adminRequest,
     'is_approved' : isApproved,
-    'created_at' : createdAt
+    'created_at' : createdAt,
+    'approved_at' : approvedAt,
+    'name' : name,
+    'phone' : phone,
   };
 }

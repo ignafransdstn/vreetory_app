@@ -1,6 +1,9 @@
+// ignore_for_file: use_build_context_synchronously
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../../../../core/theme/app_theme.dart';
+import '../../../../core/widgets/animated_button.dart';
 import '../../data/datasources/user_remote_datasource.dart';
 import '../../data/datasources/user_request_remote_datasource.dart';
 import '../../data/models/user_model.dart';
@@ -22,9 +25,9 @@ class _RegisterPageState extends State<RegisterPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFD6FFB7),
+      backgroundColor: AppTheme.ivoryWhite,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF4B7F52),
+        backgroundColor: AppTheme.darkGreen,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
@@ -46,53 +49,70 @@ class _RegisterPageState extends State<RegisterPage> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Logo dan judul
               Image.asset('assets/images/asset1.png', width: 120, height: 100),
               const SizedBox(height: 8),
               const Text(
                 'Inventory App',
-                style: TextStyle(color: Colors.grey),
+                style: TextStyle(color: AppTheme.darkGray),
               ),
               const Text(
                 'VreeTory',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22),
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22, color: AppTheme.limeGreen),
               ),
               const SizedBox(height: 32),
               Container(
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF4B7F52),
+                  color: AppTheme.darkGreen,
                   borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppTheme.limeGreen.withValues(alpha: 0.2),
+                      blurRadius: 8,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
                 ),
                 width: 350,
                 child: Column(
                   children: [
                     TextField(
                       controller: emailController,
-                      decoration: const InputDecoration(
-                        border: OutlineInputBorder(),
+                      decoration: InputDecoration(
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: BorderSide.none,
+                        ),
                         hintText: 'Email',
-                        fillColor: Color(0xFFFFFDE4),
+                        fillColor: AppTheme.cleanWhite,
                         filled: true,
+                        prefixIcon: const Icon(Icons.email, color: AppTheme.limeGreen),
                       ),
                     ),
                     const SizedBox(height: 16),
                     TextField(
                       controller: passwordController,
                       obscureText: true,
-                      decoration: const InputDecoration(
-                        border: OutlineInputBorder(),
+                      decoration: InputDecoration(
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: BorderSide.none,
+                        ),
                         hintText: 'Password',
-                        fillColor: Color(0xFFFFFDE4),
+                        fillColor: AppTheme.cleanWhite,
                         filled: true,
+                        prefixIcon: const Icon(Icons.lock, color: AppTheme.limeGreen),
                       ),
                     ),
                     const SizedBox(height: 16),
                     DropdownButtonFormField<String>(
                       value: selectedRole,
-                      decoration: const InputDecoration(
-                        border: OutlineInputBorder(),
-                        fillColor: Color(0xFFFFFDE4),
+                      decoration: InputDecoration(
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: BorderSide.none,
+                        ),
+                        fillColor: AppTheme.cleanWhite,
                         filled: true,
                       ),
                       hint: const Text('Role'),
@@ -109,14 +129,10 @@ class _RegisterPageState extends State<RegisterPage> {
                     const SizedBox(height: 24),
                     SizedBox(
                       width: double.infinity,
-                      height: 48,
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFFFD600),
-                          foregroundColor: Colors.black,
-                          textStyle:
-                              const TextStyle(fontWeight: FontWeight.bold),
-                        ),
+                      child: AnimatedElevatedButton(
+                        label: 'Register',
+                        backgroundColor: AppTheme.brightYellow,
+                        foregroundColor: AppTheme.darkGray,
                         onPressed: () async {
                           // Logika register user baru dan approval admin
                           final email = emailController.text.trim();
@@ -179,6 +195,8 @@ class _RegisterPageState extends State<RegisterPage> {
                                       adminRequest: false,
                                       isApproved: true,
                                       createdAt: DateTime.now(),
+                                      name: null,
+                                      phone: null,
                                     ),
                                   );
                                   // Sukses, redirect ke user_home_page
@@ -237,6 +255,8 @@ class _RegisterPageState extends State<RegisterPage> {
                                       adminRequest: true,
                                       isApproved: false,
                                       createdAt: DateTime.now(),
+                                      name: null,
+                                      phone: null,
                                     ),
                                   );
                                   // Tampilkan popup menunggu approval
@@ -264,9 +284,9 @@ class _RegisterPageState extends State<RegisterPage> {
                                 showDialog(
                                   context: context,
                                   builder: (context) => AlertDialog(
-                                    title: const Text('Pendaftaran Gagal'),
+                                    title: const Text('Registration Failed'),
                                     content: Text(e.message ??
-                                        'Terjadi kesalahan saat mendaftar.'),
+                                        'An error occurred during registration.'),
                                     actions: [
                                       TextButton(
                                         onPressed: () => Navigator.pop(context),
@@ -295,7 +315,6 @@ class _RegisterPageState extends State<RegisterPage> {
                             );
                           }
                         },
-                        child: const Text('Register'),
                       ),
                     ),
                   ],

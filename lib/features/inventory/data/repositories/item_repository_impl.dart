@@ -21,6 +21,8 @@ class ItemRepositoryImpl implements ItemRepository {
       itemCode: item.itemCode,
       category: item.category,
       quantity: item.quantity,
+      previousQuantity: item.previousQuantity,
+      minimumStock: item.minimumStock,
       buyRate: item.buyRate,
       sellRate: item.sellRate,
       expiredDate: item.expiredDate,
@@ -30,6 +32,7 @@ class ItemRepositoryImpl implements ItemRepository {
       imageUrl: item.imageUrl,
       status: item.status,
       createdBy: item.createdBy,
+      updatedBy: item.updatedBy,
       createdAt: item.createdAt,
       updatedAt: item.updatedAt,
     );
@@ -60,6 +63,8 @@ class ItemRepositoryImpl implements ItemRepository {
       itemCode: item.itemCode,
       category: item.category,
       quantity: item.quantity,
+      previousQuantity: item.previousQuantity,
+      minimumStock: item.minimumStock,
       buyRate: item.buyRate,
       sellRate: item.sellRate,
       expiredDate: item.expiredDate,
@@ -69,6 +74,7 @@ class ItemRepositoryImpl implements ItemRepository {
       imageUrl: item.imageUrl,
       status: item.status,
       createdBy: item.createdBy,
+      updatedBy: item.updatedBy,
       createdAt: item.createdAt,
       updatedAt: item.updatedAt,
     );

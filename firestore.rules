@@ -1,0 +1,52 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper function to check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Helper function to check user role
+    function isAdmin() {
+      return isAuthenticated() && 
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+    
+    function isUser() {
+      return isAuthenticated() && 
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'user';
+    }
+    
+    // Users collection
+    match /users/{userId} {
+      allow read: if isAuthenticated() && (request.auth.uid == userId || isAdmin());
+      allow write: if isAuthenticated() && request.auth.uid == userId;
+      allow delete: if isAdmin();
+    }
+    
+    // Items collection
+    match /items/{itemId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isAdmin();
+      allow update: if isAuthenticated() && (isAdmin() || isUser());
+      allow delete: if isAdmin();
+    }
+    
+    // Loss records collection
+    match /loss_records/{lossRecordId} {
+      allow read: if isAuthenticated() && isAdmin();
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated() && isAdmin();
+      allow delete: if isAdmin();
+    }
+    
+    // User requests collection
+    match /usersRequest/{userRequestId} {
+      allow read: if isAdmin();
+      allow create: if isAuthenticated();
+      allow delete: if isAdmin();
+    }
+  }
+}

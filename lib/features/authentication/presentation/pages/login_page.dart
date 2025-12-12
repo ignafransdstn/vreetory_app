@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/theme/app_theme.dart';
+import '../../../../core/widgets/animated_button.dart';
 import '../providers/auth_provider.dart';
 import 'admin_home_page.dart';
 import 'user_home_page.dart';
 import 'register_page.dart';
+import 'forgot_password_page.dart';
 
 class LoginPage extends ConsumerStatefulWidget {
   const LoginPage({super.key});
@@ -44,24 +47,29 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     });
 
     return Scaffold(
-      backgroundColor: const Color(0xFFD6FFB7),
+      backgroundColor: AppTheme.ivoryWhite,
       body: Center(
         child: SingleChildScrollView(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Logo dan judul
-              Image.asset('assets/images/asset1.png',
-                  width: 185, height: 185), // Ganti sesuai asset Anda
-              const Text('Inventory App', style: TextStyle(color: Colors.grey)),
+              Image.asset('assets/images/asset1.png', width: 185, height: 185),
+              const Text('Inventory App', style: TextStyle(color: AppTheme.darkGray)),
               const Text('VreeTory',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22)),
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22, color: AppTheme.limeGreen)),
               const SizedBox(height: 32),
               Container(
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF4B7F52),
-                  borderRadius: BorderRadius.circular(12),
+                  color: AppTheme.darkGreen,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppTheme.limeGreen.withValues(alpha: 0.2),
+                      blurRadius: 8,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
                 ),
                 width: 350,
                 child: Column(
@@ -69,14 +77,15 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                     TextField(
                       controller: emailController,
                       decoration: InputDecoration(
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            borderSide: const BorderSide(
-                                width: 0, style: BorderStyle.none),
-                          ),
-                          hintText: 'Email',
-                          fillColor: const Color(0xFFFFFDE4),
-                          filled: true),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: BorderSide.none,
+                        ),
+                        hintText: 'Email',
+                        fillColor: AppTheme.cleanWhite,
+                        filled: true,
+                        prefixIcon: const Icon(Icons.email, color: AppTheme.limeGreen),
+                      ),
                     ),
                     const SizedBox(height: 16),
                     TextField(
@@ -85,75 +94,69 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                       decoration: InputDecoration(
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(
-                              width: 0, style: BorderStyle.none),
+                          borderSide: BorderSide.none,
                         ),
                         hintText: 'Password',
-                        fillColor: const Color(0xFFFFFDE4),
+                        fillColor: AppTheme.cleanWhite,
                         filled: true,
+                        prefixIcon: const Icon(Icons.lock, color: AppTheme.limeGreen),
                         suffixIcon: IconButton(
                           icon: Icon(
-                            _obscurePassword
-                                ? Icons.visibility_off
-                                : Icons.visibility,
-                            color: Colors.grey,
+                            _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                            color: AppTheme.limeGreen,
                           ),
-                          tooltip: _obscurePassword
-                              ? 'Tampilkan password'
-                              : 'Sembunyikan password',
                           onPressed: () {
-                            setState(() {
-                              _obscurePassword = !_obscurePassword;
-                            });
+                            setState(() => _obscurePassword = !_obscurePassword);
                           },
                         ),
                       ),
                     ),
                     const SizedBox(height: 24),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFFFFD93D)),
-                            onPressed: authState.status == AuthStatus.loading
-                                ? null
-                                : () {
-                                    ref.read(authProvider.notifier).signIn(
-                                          context,
-                                          emailController.text.trim(),
-                                          passwordController.text.trim(),
-                                        );
-                                  },
-                            child: authState.status == AuthStatus.loading
-                                ? const CircularProgressIndicator()
-                                : const Text('Sign in'),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFFD6FFB7)),
-                            onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => const RegisterPage(),
-                                ),
-                              );
-                            },
-                            child: const Text('Register'),
-                          ),
-                        ),
-                      ],
+                    SizedBox(
+                      width: double.infinity,
+                      child: AnimatedOutlinedButton(
+                        label: 'Sign In',
+                        borderColor: AppTheme.brightYellow,
+                        textColor: AppTheme.brightYellow,
+                        onPressed: authState.status == AuthStatus.loading
+                            ? () {}
+                            : () {
+                                ref.read(authProvider.notifier).signIn(
+                                      context,
+                                      emailController.text.trim(),
+                                      passwordController.text.trim(),
+                                    );
+                              },
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      child: AnimatedOutlinedButton(
+                        label: 'Register',
+                        borderColor: AppTheme.brightYellow,
+                        textColor: AppTheme.brightYellow,
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const RegisterPage(),
+                            ),
+                          );
+                        },
+                      ),
                     ),
                     const SizedBox(height: 12),
                     TextButton(
                       onPressed: () {
-                        // TODO: Forgot password
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const ForgotPasswordPage(),
+                          ),
+                        );
                       },
-                      child: const Text('Forgot password?'),
+                      child: const Text('Forgot password?', style: TextStyle(color: AppTheme.brightYellow)),
                     ),
                   ],
                 ),

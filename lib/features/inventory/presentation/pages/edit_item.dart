@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import '../../../../core/theme/app_theme.dart';
+import '../../domain/entities/item_entity.dart';
 import '../provider/item_provider.dart';
+import '../../../authentication/presentation/providers/auth_provider.dart';
 import 'edit_item_field.dart';
 
 class EditItemPage extends ConsumerStatefulWidget {
@@ -20,6 +23,38 @@ class _EditItemPageState extends ConsumerState<EditItemPage> {
     Future.microtask(() => ref.read(itemProvider.notifier).fetchAllItems());
   }
 
+  void _handleEditItemTap(BuildContext context, ItemEntity item) {
+    final authState = ref.read(authProvider);
+    final userRole = authState.user?.role;
+    final isItemInactive = item.status == 'inactive';
+    
+    // Check if user is trying to edit an inactive item
+    if (userRole == 'user' && isItemInactive) {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Access Denied'),
+          content: const Text('Users cannot modify items with INACTIVE status. Contact the administrator to activate this item.'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('OK'),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
+    
+    // Open edit item page
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => EditItemFieldPage(item: item),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final itemState = ref.watch(itemProvider);
@@ -31,9 +66,9 @@ class _EditItemPageState extends ConsumerState<EditItemPage> {
       });
 
     return Scaffold(
-      backgroundColor: const Color(0xFFD6FFB7),
+      backgroundColor: AppTheme.ivoryWhite,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF4B7F52),
+        backgroundColor: AppTheme.darkGreen,
         title: const Text('EDIT ITEM'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
@@ -53,13 +88,17 @@ class _EditItemPageState extends ConsumerState<EditItemPage> {
                 },
                 decoration: InputDecoration(
                   hintText: 'SEARCH',
-                  prefixIcon: const Icon(Icons.search),
+                  prefixIcon: const Icon(Icons.search, color: AppTheme.limeGreen),
                   filled: true,
-                  fillColor: Colors.white,
+                  fillColor: AppTheme.cleanWhite,
                   contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(24),
-                    borderSide: BorderSide.none,
+                    borderSide: const BorderSide(color: AppTheme.brightYellow, width: 2),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(24),
+                    borderSide: const BorderSide(color: AppTheme.limeGreen, width: 2),
                   ),
                 ),
               ),
@@ -73,23 +112,17 @@ class _EditItemPageState extends ConsumerState<EditItemPage> {
                       itemBuilder: (context, index) {
                         final item = items[index];
                         return Card(
-                          color: const Color(0xFFFFD93D),
+                          color: AppTheme.brightYellow,
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                          elevation: 2,
                           margin: const EdgeInsets.only(bottom: 16),
                           child: ListTile(
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => EditItemFieldPage(item: item),
-                                ),
-                              );
-                            },
+                            onTap: () => _handleEditItemTap(context, item),
                             title: Text(
                               item.itemName,
                               style: const TextStyle(
                                 fontWeight: FontWeight.bold,
-                                color: Color(0xFF4B7F52),
+                                color: AppTheme.darkGray,
                               ),
                             ),
                             subtitle: Column(
@@ -99,7 +132,7 @@ class _EditItemPageState extends ConsumerState<EditItemPage> {
                                   (item.status).toUpperCase(),
                                   style: TextStyle(
                                     color: item.status == 'active'
-                                        ? Colors.green[800]
+                                        ? AppTheme.limeGreen
                                         : Colors.red[800],
                                     fontWeight: FontWeight.w600,
                                   ),
@@ -113,7 +146,7 @@ class _EditItemPageState extends ConsumerState<EditItemPage> {
                                 ),
                               ],
                             ),
-                            trailing: const Icon(Icons.edit, color: Color(0xFF4B7F52)),
+                            trailing: const Icon(Icons.edit, color: AppTheme.limeGreen),
                           ),
                         );
                       },

@@ -1,6 +1,9 @@
+// ignore_for_file: use_build_context_synchronously
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import '../../../../core/theme/app_theme.dart';
+import '../../../../core/widgets/animated_button.dart';
 import '../../domain/entities/item_entity.dart';
 import 'package:vreetory_app/features/inventory/presentation/provider/item_provider.dart';
 import '../../../authentication/presentation/providers/auth_provider.dart';
@@ -49,6 +52,7 @@ class _AddItemPageState extends ConsumerState<AddItemPage> {
   final _itemNameController = TextEditingController();
   final _itemCodeController = TextEditingController();
   final _quantityController = TextEditingController();
+  final _minimumStockController = TextEditingController();
   final _buyRateController = TextEditingController();
   final _sellRateController = TextEditingController();
   final _expiredDateController = TextEditingController();
@@ -137,6 +141,8 @@ class _AddItemPageState extends ConsumerState<AddItemPage> {
       itemCode: itemCode,
       category: _selectedCategory ?? '',
       quantity: _quantityController.text.trim(),
+      previousQuantity: _quantityController.text.trim(), // Set to same as quantity on initial creation
+      minimumStock: _minimumStockController.text.trim().isEmpty ? '0' : _minimumStockController.text.trim(),
       buyRate: _buyRateController.text.trim(),
       sellRate: _sellRateController.text.trim(),
       expiredDate: _expiredDateController.text.trim(),
@@ -146,8 +152,10 @@ class _AddItemPageState extends ConsumerState<AddItemPage> {
       imageUrl: '', // default, no image in form. Will be handled later
       status: _status ? 'active' : 'inactive',
       createdBy: createdBy,
+      updatedBy: createdBy,
       createdAt: now,
       updatedAt: now,
+      quantityChangeReason: null,
     );
     await itemNotifier.createNewItem(item);
     if (context.mounted && itemState.isSuccess) {
@@ -181,7 +189,7 @@ class _AddItemPageState extends ConsumerState<AddItemPage> {
 
     if (authState.user == null) {
       return Scaffold(
-        backgroundColor: const Color(0xFFD6FFB7),
+        backgroundColor: AppTheme.ivoryWhite,
         appBar: AppBar(
           backgroundColor: const Color(0xFF4B7F52),
           title: const Text('ADD ITEM'),
@@ -205,9 +213,9 @@ class _AddItemPageState extends ConsumerState<AddItemPage> {
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFFD6FFB7),
+      backgroundColor: AppTheme.ivoryWhite,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF4B7F52),
+        backgroundColor: AppTheme.darkGreen,
         title: const Text('ADD ITEM'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
@@ -223,8 +231,15 @@ class _AddItemPageState extends ConsumerState<AddItemPage> {
               padding: const EdgeInsets.all(24),
               width: 400,
               decoration: BoxDecoration(
-                color: const Color(0xFF27632A),
+                color: AppTheme.darkGreen,
                 borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppTheme.limeGreen.withValues(alpha: 0.2),
+                    blurRadius: 8,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
               ),
               child: Form(
                 key: _formKey,
@@ -294,6 +309,14 @@ class _AddItemPageState extends ConsumerState<AddItemPage> {
                       keyboardType: TextInputType.number,
                     ),
                     _helper('Fill quantity (*optional)'),
+                    const SizedBox(height: 16),
+                    _label('MINIMUM STOCK'),
+                    TextFormField(
+                      controller: _minimumStockController,
+                      decoration: _inputDecoration('Enter input here'),
+                      keyboardType: TextInputType.number,
+                    ),
+                    _helper('Fill minimum stock threshold (*optional)'),
                     const SizedBox(height: 16),
                     _label('BUY RATE', error: _buyRateError),
                     TextFormField(
@@ -394,32 +417,29 @@ class _AddItemPageState extends ConsumerState<AddItemPage> {
                       contentPadding: EdgeInsets.zero,
                     ),
                     const SizedBox(height: 24),
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFFFD600),
-                        foregroundColor: Colors.black,
-                        textStyle: const TextStyle(fontWeight: FontWeight.bold),
-                        minimumSize: const Size.fromHeight(48),
+                    SizedBox(
+                      width: double.infinity,
+                      child: AnimatedOutlinedButton(
+                        label: 'SUBMIT DATA',
+                        borderColor: AppTheme.brightYellow,
+                        textColor: AppTheme.brightYellow,
+                        onPressed: itemState.isLoading
+                            ? () {}
+                            : () async {
+                                final authState = ref.read(authProvider);
+                                final createdBy = authState.user?.email ?? '';
+                                if (createdBy.isEmpty) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('You must be logged in to add an item.'),
+                                      backgroundColor: Colors.red,
+                                    ),
+                                  );
+                                  return;
+                                }
+                                await handleSubmit();
+                              },
                       ),
-                      onPressed: itemState.isLoading
-                          ? null
-                          : () async {
-                              final authState = ref.read(authProvider);
-                              final createdBy = authState.user?.email ?? '';
-                              if (createdBy.isEmpty) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('You must be logged in to add an item.'),
-                                    backgroundColor: Colors.red,
-                                  ),
-                                );
-                                return;
-                              }
-                              await handleSubmit();
-                            },
-                      child: itemState.isLoading
-                          ? const CircularProgressIndicator()
-                          : const Text('SUBMIT DATA'),
                     ),
                     if (itemState.errorMessage != null)
                       Padding(
@@ -440,25 +460,25 @@ class _AddItemPageState extends ConsumerState<AddItemPage> {
   }
 
   Widget _label(String text, {bool error = false}) => Padding(
-        padding: const EdgeInsets.only(bottom: 4),
+        padding: const EdgeInsets.only(bottom: 8),
         child: Text(
           text,
           style: TextStyle(
-            color: error ? Colors.red : Colors.white,
+            color: error ? Colors.red : AppTheme.brightYellow,
             fontWeight: FontWeight.bold,
             fontSize: 14,
-            letterSpacing: 1,
+            letterSpacing: 1.2,
           ),
         ),
       );
 
   Widget _helper(String text) => Padding(
-        padding: const EdgeInsets.only(bottom: 8, left: 2),
+        padding: const EdgeInsets.only(bottom: 12, left: 2),
         child: Text(
           text,
-          style: const TextStyle(
-            color: Colors.white70,
-            fontSize: 11,
+          style: TextStyle(
+            color: Colors.grey[400],
+            fontSize: 12,
           ),
         ),
       );

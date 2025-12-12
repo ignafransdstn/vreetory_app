@@ -4,6 +4,8 @@ class ItemEntity {
   final String itemCode;
   final String category;
   final String quantity;
+  final String previousQuantity;
+  final String minimumStock;
   final String buyRate;
   final String sellRate;
   final String expiredDate;
@@ -13,8 +15,10 @@ class ItemEntity {
   final String imageUrl;
   final String status;
   final String createdBy;
+  final String updatedBy;
   final DateTime createdAt;
   final DateTime updatedAt;
+  final String? quantityChangeReason;
 
   ItemEntity ({
     required this.uid,
@@ -22,6 +26,8 @@ class ItemEntity {
     required this.itemCode,
     required this.category,
     required this.quantity,
+    required this.previousQuantity,
+    required this.minimumStock,
     required this.buyRate,
     required this.sellRate,
     required this.expiredDate,
@@ -31,7 +37,9 @@ class ItemEntity {
     required this.imageUrl,
     required this.status,
     required this.createdBy,
+    required this.updatedBy,
     required this.createdAt,
-    required this.updatedAt
+    required this.updatedAt,
+    this.quantityChangeReason,
   });
 }

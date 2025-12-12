@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
+import '../../../../core/theme/app_theme.dart';
 import 'package:vreetory_app/features/inventory/presentation/pages/add_item.dart';
 import 'package:vreetory_app/features/inventory/presentation/pages/edit_item.dart';
 import 'package:vreetory_app/features/inventory/presentation/pages/delete_item.dart';
 import 'package:vreetory_app/features/inventory/presentation/pages/update_stock.dart';
 import 'package:vreetory_app/features/inventory/presentation/pages/list_item_stock.dart';
-import 'package:vreetory_app/features/inventory/presentation/pages/reporting.dart';
+import 'package:vreetory_app/features/reporting/presentation/pages/reporting_page.dart';
 
 class AdminMenuPage extends StatelessWidget {
   const AdminMenuPage({super.key});
@@ -63,7 +64,7 @@ class AdminMenuPage extends StatelessWidget {
     ];
 
     return Scaffold(
-      backgroundColor: const Color(0xFFD6FFB7),
+      backgroundColor: AppTheme.ivoryWhite,
       body: SafeArea(
         child: Column(
           children: [
@@ -80,14 +81,14 @@ class AdminMenuPage extends StatelessWidget {
                   const SizedBox(height: 4),
                   const Text(
                     'Inventory App',
-                    style: TextStyle(color: Colors.grey, fontSize: 12),
+                    style: TextStyle(color: AppTheme.darkGray, fontSize: 12),
                   ),
                   const Text(
                     'VreeTory',
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 20,
-                      color: Color(0xFF4B7F52),
+                      color: AppTheme.limeGreen,
                     ),
                   ),
                 ],
@@ -140,7 +141,7 @@ class _MenuButton extends StatelessWidget {
             height: 88,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: Colors.white.withOpacity(0.15),
+              color: Colors.white.withValues(alpha: 0.15),
             ),
             child: Padding(
               padding: const EdgeInsets.all(8.0),
@@ -157,11 +158,13 @@ class _MenuButton extends StatelessWidget {
             item.label,
             style: const TextStyle(
               fontWeight: FontWeight.bold,
-              fontSize: 16,
+              fontSize: 13,
               color: Colors.black,
-              letterSpacing: 1,
+              letterSpacing: 0.5,
             ),
             textAlign: TextAlign.center,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),

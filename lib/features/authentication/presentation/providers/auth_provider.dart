@@ -1,3 +1,4 @@
+// ignore_for_file: use_build_context_synchronously
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -49,9 +50,14 @@ class AuthNotifier extends StateNotifier<AuthState> {
           role: data['role'],
           adminRequest: data.containsKey('adminRequest') ? data['adminRequest'] : false,
           isApproved: data.containsKey('isApproved') ? data['isApproved'] : false,
-          createdAt: data.containsKey('createdAt') && data['createdAt'] is Timestamp
-              ? (data['createdAt'] as Timestamp).toDate()
+          createdAt: data.containsKey('created_at') && data['created_at'] is Timestamp
+              ? (data['created_at'] as Timestamp).toDate()
               : DateTime.now(),
+          approvedAt: data.containsKey('approved_at') && data['approved_at'] is Timestamp
+              ? (data['approved_at'] as Timestamp).toDate()
+              : null,
+          name: data['name'] as String?,
+          phone: data['phone'] as String?,
         );
         state = state.copyWith(status: AuthStatus.authenticated, user: userEntity, error: null);
       }
@@ -69,7 +75,27 @@ class AuthNotifier extends StateNotifier<AuthState> {
       if (user != null) {
         final doc = await _firestore.collection('users').doc(user.uid).get();
         if (doc.exists) {
-          final role = doc['role'];
+          final data = doc.data()!;
+          final userEntity = UserEntity(
+            uid: data['uid'],
+            email: data['email'],
+            role: data['role'],
+            adminRequest: data.containsKey('adminRequest') ? data['adminRequest'] : false,
+            isApproved: data.containsKey('isApproved') ? data['isApproved'] : false,
+            createdAt: data.containsKey('created_at') && data['created_at'] is Timestamp
+                ? (data['created_at'] as Timestamp).toDate()
+                : DateTime.now(),
+            approvedAt: data.containsKey('approved_at') && data['approved_at'] is Timestamp
+                ? (data['approved_at'] as Timestamp).toDate()
+                : null,
+            name: data['name'] as String?,
+            phone: data['phone'] as String?,
+          );
+          
+          // Update state with new user
+          state = state.copyWith(status: AuthStatus.authenticated, user: userEntity, error: null);
+          
+          final role = data['role'];
 
           if (role == 'admin') {
             Navigator.pushReplacement(
@@ -117,6 +143,29 @@ class AuthNotifier extends StateNotifier<AuthState> {
   Future<void> signOut() async {
     await _auth.signOut();
     state = AuthState();
+  }
+
+  Future<void> sendPasswordResetEmail(String email) async {
+    try {
+      await _auth.sendPasswordResetEmail(email: email);
+    } on FirebaseAuthException catch (e) {
+      throw Exception(e.message ?? 'Gagal mengirim email reset');
+    }
+  }
+
+  Future<void> resetPassword(
+    String email,
+    String newPassword,
+    String verificationCode,
+  ) async {
+    try {
+      // Firebase akan mengirim email dengan link reset
+      // Pengguna perlu klik link di email mereka
+      // Ini adalah simplified flow - dalam production, gunakan Firebase verifikasi email
+      await _auth.sendPasswordResetEmail(email: email);
+    } on FirebaseAuthException catch (e) {
+      throw Exception(e.message ?? 'Gagal reset password');
+    }
   }
 }
 
