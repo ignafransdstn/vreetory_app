@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:printing/printing.dart';
-import 'package:share_plus/share_plus.dart';
 import 'package:vreetory_app/core/theme/app_theme.dart';
 import 'package:vreetory_app/features/pos/domain/entities/transaction_entity.dart';
 import 'package:vreetory_app/features/pos/presentation/utils/receipt_pdf_generator.dart';
