@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import '../../../../core/theme/app_theme.dart';
-import '../../../inventory/domain/entities/item_entity.dart';
-import '../../../inventory/presentation/provider/item_provider.dart';
+import 'package:vreetory_app/core/theme/app_theme.dart';
+import 'package:vreetory_app/features/inventory/domain/entities/item_entity.dart';
+import 'package:vreetory_app/features/inventory/presentation/provider/item_provider.dart';
 
 class ExpiredItemsListPage extends ConsumerWidget {
   final String title;
@@ -67,9 +67,7 @@ class ExpiredItemsListPage extends ConsumerWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(
-                    type == 'seven_days'
-                        ? Icons.check_circle
-                        : Icons.info,
+                    type == 'seven_days' ? Icons.check_circle : Icons.info,
                     size: 64,
                     color: Colors.grey[400],
                   ),

@@ -42,7 +42,8 @@ class _UpdateStockPageState extends ConsumerState<UpdateStockPage> {
     if (item.status == 'inactive' && userRole != 'admin') {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Cannot update stock for inactive items. Please contact administrator.'),
+          content: Text(
+              'Cannot update stock for inactive items. Please contact administrator.'),
           backgroundColor: Colors.red,
         ),
       );
@@ -92,20 +93,37 @@ class _UpdateStockPageState extends ConsumerState<UpdateStockPage> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text('Qty Before', style: TextStyle(fontSize: 10, color: Colors.grey, fontWeight: FontWeight.w600)),
+                            const Text('Qty Before',
+                                style: TextStyle(
+                                    fontSize: 10,
+                                    color: Colors.grey,
+                                    fontWeight: FontWeight.w600)),
                             const SizedBox(height: 4),
-                            Text(item.previousQuantity, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87)),
+                            Text(item.previousQuantity,
+                                style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.black87)),
                           ],
                         ),
                       ),
-                      Icon(Icons.arrow_forward, color: Colors.grey[400], size: 20),
+                      Icon(Icons.arrow_forward,
+                          color: Colors.grey[400], size: 20),
                       Flexible(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
-                            const Text('New Qty', style: TextStyle(fontSize: 10, color: Colors.grey, fontWeight: FontWeight.w600)),
+                            const Text('New Qty',
+                                style: TextStyle(
+                                    fontSize: 10,
+                                    color: Colors.grey,
+                                    fontWeight: FontWeight.w600)),
                             const SizedBox(height: 4),
-                            Text(quantityController.text, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.brightYellow)),
+                            Text(quantityController.text,
+                                style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppTheme.brightYellow)),
                           ],
                         ),
                       ),
@@ -125,7 +143,8 @@ class _UpdateStockPageState extends ConsumerState<UpdateStockPage> {
                       borderRadius: BorderRadius.circular(8),
                     ),
                     hintText: 'Enter new quantity',
-                    prefixIcon: const Icon(Icons.shopping_cart, color: AppTheme.limeGreen),
+                    prefixIcon: const Icon(Icons.shopping_cart,
+                        color: AppTheme.limeGreen),
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -150,7 +169,8 @@ class _UpdateStockPageState extends ConsumerState<UpdateStockPage> {
                     value: selectedReason,
                     isExpanded: true,
                     underline: const SizedBox.shrink(),
-                    hint: const Text('Select a reason', style: TextStyle(fontSize: 13)),
+                    hint: const Text('Select a reason',
+                        style: TextStyle(fontSize: 13)),
                     items: reasonOptions.map((reason) {
                       return DropdownMenuItem(
                         value: reason,
@@ -221,7 +241,8 @@ class _UpdateStockPageState extends ConsumerState<UpdateStockPage> {
                   quantityChangeReason: selectedReason,
                 );
 
-                await _handleUpdateQuantity(context, updatedItem, item.quantity);
+                await _handleUpdateQuantity(
+                    context, updatedItem, item.quantity);
                 Navigator.pop(context);
               },
               child: const Text(
@@ -244,12 +265,13 @@ class _UpdateStockPageState extends ConsumerState<UpdateStockPage> {
       // Update the item quantity
       await ref.read(itemProvider.notifier).updateExistingItem(updatedItem);
 
-      // Create loss record if the reason is a loss-related reason
+      // Create loss record only for specific loss-related reasons
+      // 'Update Stock' and 'Other' are treated as adjustments, not losses
       if (updatedItem.quantityChangeReason != null &&
-          ['Expired', 'Demaged/Defective', 'Lost'].contains(
-              updatedItem.quantityChangeReason)) {
-        final oldQty = int.tryParse(oldQuantity) ?? 0;
-        final newQty = int.tryParse(updatedItem.quantity) ?? 0;
+          ['Expired', 'Demaged/Defective', 'Lost']
+              .contains(updatedItem.quantityChangeReason)) {
+        final oldQty = double.tryParse(oldQuantity) ?? 0.0;
+        final newQty = double.tryParse(updatedItem.quantity) ?? 0.0;
         final quantityLost = (oldQty - newQty).abs();
 
         if (quantityLost > 0) {
@@ -265,15 +287,17 @@ class _UpdateStockPageState extends ConsumerState<UpdateStockPage> {
             reasonType: updatedItem.quantityChangeReason!,
             quantityLost: quantityLost.toString(),
             buyRate: updatedItem.buyRate,
-            totalLoss: (quantityLost * (double.tryParse(updatedItem.buyRate) ?? 0))
-                .toStringAsFixed(2),
+            totalLoss:
+                (quantityLost * (double.tryParse(updatedItem.buyRate) ?? 0))
+                    .toStringAsFixed(2),
             createdBy: createdBy,
             createdAt: DateTime.now(),
             notes: 'Automatic loss record created from stock update',
           );
 
           // Save loss record to database
-          final dataSource = LossRecordRemoteDataSource(FirebaseFirestore.instance);
+          final dataSource =
+              LossRecordRemoteDataSource(FirebaseFirestore.instance);
           await dataSource.createLossRecord(lossRecord as LossRecordEntity);
         }
       }
@@ -343,17 +367,21 @@ class _UpdateStockPageState extends ConsumerState<UpdateStockPage> {
                 },
                 decoration: InputDecoration(
                   hintText: 'SEARCH',
-                  prefixIcon: const Icon(Icons.search, color: AppTheme.limeGreen),
+                  prefixIcon:
+                      const Icon(Icons.search, color: AppTheme.limeGreen),
                   filled: true,
                   fillColor: AppTheme.cleanWhite,
-                  contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
+                  contentPadding:
+                      const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(24),
-                    borderSide: const BorderSide(color: AppTheme.brightYellow, width: 2),
+                    borderSide: const BorderSide(
+                        color: AppTheme.brightYellow, width: 2),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(24),
-                    borderSide: const BorderSide(color: AppTheme.limeGreen, width: 2),
+                    borderSide:
+                        const BorderSide(color: AppTheme.limeGreen, width: 2),
                   ),
                 ),
               ),
@@ -369,13 +397,15 @@ class _UpdateStockPageState extends ConsumerState<UpdateStockPage> {
                           ),
                         )
                       : ListView.builder(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 8),
                           itemCount: items.length,
                           itemBuilder: (context, index) {
                             final item = items[index];
                             return Card(
                               color: AppTheme.brightYellow,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16)),
                               elevation: 2,
                               margin: const EdgeInsets.only(bottom: 16),
                               child: Padding(
@@ -387,7 +417,8 @@ class _UpdateStockPageState extends ConsumerState<UpdateStockPage> {
                                       children: [
                                         Expanded(
                                           child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
                                             children: [
                                               Text(
                                                 item.itemName,
@@ -415,7 +446,8 @@ class _UpdateStockPageState extends ConsumerState<UpdateStockPage> {
                                           ),
                                           decoration: BoxDecoration(
                                             color: AppTheme.darkGreen,
-                                            borderRadius: BorderRadius.circular(8),
+                                            borderRadius:
+                                                BorderRadius.circular(8),
                                           ),
                                           child: Column(
                                             children: [
@@ -444,7 +476,8 @@ class _UpdateStockPageState extends ConsumerState<UpdateStockPage> {
                                       children: [
                                         Expanded(
                                           child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
                                             children: [
                                               const Text(
                                                 'Status',
@@ -470,7 +503,8 @@ class _UpdateStockPageState extends ConsumerState<UpdateStockPage> {
                                         ),
                                         Expanded(
                                           child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
                                             children: [
                                               const Text(
                                                 'Last Updated',
@@ -482,7 +516,8 @@ class _UpdateStockPageState extends ConsumerState<UpdateStockPage> {
                                               ),
                                               const SizedBox(height: 4),
                                               Text(
-                                                DateFormat('dd/MM/yyyy\nHH:mm').format(item.updatedAt),
+                                                DateFormat('dd/MM/yyyy\nHH:mm')
+                                                    .format(item.updatedAt),
                                                 style: const TextStyle(
                                                   fontSize: 11,
                                                   color: Colors.black87,
@@ -509,11 +544,13 @@ class _UpdateStockPageState extends ConsumerState<UpdateStockPage> {
     );
   }
 
-  Widget _buildUpdateButton(BuildContext context, ItemEntity item, WidgetRef ref) {
+  Widget _buildUpdateButton(
+      BuildContext context, ItemEntity item, WidgetRef ref) {
     final authState = ref.watch(authProvider);
     final userRole = authState.user?.role;
     final isItemInactive = item.status == 'inactive';
-    final canUserUpdate = userRole == 'admin' || (userRole == 'user' && !isItemInactive);
+    final canUserUpdate =
+        userRole == 'admin' || (userRole == 'user' && !isItemInactive);
 
     if (!canUserUpdate) {
       return SizedBox(

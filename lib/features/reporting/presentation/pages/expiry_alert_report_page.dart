@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/utils/quantity_formatter.dart';
 import '../../../inventory/presentation/provider/expiry_alert_provider.dart';
 import '../../domain/entities/expiry_alert_entity.dart';
 
@@ -76,11 +77,11 @@ class _ExpiryAlertReportPageState extends ConsumerState<ExpiryAlertReportPage> {
         expiryDate = DateTime.now().add(const Duration(days: 365));
       }
 
-      int qty = 0;
+      double qty = 0.0;
       try {
-        qty = int.parse(item.quantity.toString());
+        qty = double.parse(item.quantity.toString());
       } catch (e) {
-        qty = 0;
+        qty = 0.0;
       }
 
       return ExpiryAlertItem(
@@ -117,7 +118,15 @@ class _ExpiryAlertReportPageState extends ConsumerState<ExpiryAlertReportPage> {
   Widget _buildFilterSection(List<ExpiryAlertItem> items) {
     final categories = _getUniqueCategories(items);
     final suppliers = _getUniqueSuppliers(items);
-    final statuses = ['All', 'At Risk', 'Expired', 'Today', 'This Week', 'This Month', 'Safe'];
+    final statuses = [
+      'All',
+      'At Risk',
+      'Expired',
+      'Today',
+      'This Week',
+      'This Month',
+      'Safe'
+    ];
 
     return Card(
       elevation: 1,
@@ -140,9 +149,10 @@ class _ExpiryAlertReportPageState extends ConsumerState<ExpiryAlertReportPage> {
               children: [
                 Expanded(
                   child: DropdownButtonFormField<String>(
-                    value: _selectedStatus,
+                    initialValue: _selectedStatus,
                     items: statuses
-                        .map((status) => DropdownMenuItem(value: status, child: Text(status)))
+                        .map((status) => DropdownMenuItem(
+                            value: status, child: Text(status)))
                         .toList(),
                     onChanged: (value) {
                       setState(() {
@@ -152,7 +162,8 @@ class _ExpiryAlertReportPageState extends ConsumerState<ExpiryAlertReportPage> {
                     },
                     decoration: InputDecoration(
                       labelText: 'Status',
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8)),
                       isDense: true,
                     ),
                   ),
@@ -160,9 +171,10 @@ class _ExpiryAlertReportPageState extends ConsumerState<ExpiryAlertReportPage> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: DropdownButtonFormField<String>(
-                    value: _selectedCategory,
+                    initialValue: _selectedCategory,
                     items: ['All', ...categories]
-                        .map((cat) => DropdownMenuItem(value: cat, child: Text(cat)))
+                        .map((cat) =>
+                            DropdownMenuItem(value: cat, child: Text(cat)))
                         .toList(),
                     onChanged: (value) {
                       setState(() {
@@ -172,7 +184,8 @@ class _ExpiryAlertReportPageState extends ConsumerState<ExpiryAlertReportPage> {
                     },
                     decoration: InputDecoration(
                       labelText: 'Category',
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8)),
                       isDense: true,
                     ),
                   ),
@@ -181,7 +194,7 @@ class _ExpiryAlertReportPageState extends ConsumerState<ExpiryAlertReportPage> {
             ),
             const SizedBox(height: 12),
             DropdownButtonFormField<String>(
-              value: _selectedSupplier,
+              initialValue: _selectedSupplier,
               items: ['All', ...suppliers]
                   .map((sup) => DropdownMenuItem(value: sup, child: Text(sup)))
                   .toList(),
@@ -193,7 +206,8 @@ class _ExpiryAlertReportPageState extends ConsumerState<ExpiryAlertReportPage> {
               },
               decoration: InputDecoration(
                 labelText: 'Supplier',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                border:
+                    OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
                 isDense: true,
               ),
             ),
@@ -320,7 +334,8 @@ class _ExpiryAlertReportPageState extends ConsumerState<ExpiryAlertReportPage> {
       children: [
         Card(
           elevation: 1,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
@@ -328,7 +343,10 @@ class _ExpiryAlertReportPageState extends ConsumerState<ExpiryAlertReportPage> {
               children: [
                 Text(
                   'Expiry Status Distribution',
-                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.grey.shade700),
+                  style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.grey.shade700),
                 ),
                 const SizedBox(height: 16),
                 SizedBox(
@@ -340,7 +358,8 @@ class _ExpiryAlertReportPageState extends ConsumerState<ExpiryAlertReportPage> {
                       sectionsSpace: 0,
                       pieTouchData: PieTouchData(
                         enabled: true,
-                        touchCallback: (FlTouchEvent event, pieTouchResponse) {},
+                        touchCallback:
+                            (FlTouchEvent event, pieTouchResponse) {},
                       ),
                     ),
                   ),
@@ -354,7 +373,8 @@ class _ExpiryAlertReportPageState extends ConsumerState<ExpiryAlertReportPage> {
         const SizedBox(height: 16),
         Card(
           elevation: 1,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
@@ -362,7 +382,10 @@ class _ExpiryAlertReportPageState extends ConsumerState<ExpiryAlertReportPage> {
               children: [
                 Text(
                   'Items by Category',
-                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.grey.shade700),
+                  style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.grey.shade700),
                 ),
                 const SizedBox(height: 16),
                 SizedBox(
@@ -371,7 +394,8 @@ class _ExpiryAlertReportPageState extends ConsumerState<ExpiryAlertReportPage> {
                     BarChartData(
                       barGroups: _buildCategoryBarChartGroups(summary),
                       borderData: FlBorderData(show: false),
-                      gridData: const FlGridData(show: true, drawVerticalLine: false),
+                      gridData:
+                          const FlGridData(show: true, drawVerticalLine: false),
                       titlesData: FlTitlesData(
                         bottomTitles: AxisTitles(
                           sideTitles: SideTitles(
@@ -379,7 +403,8 @@ class _ExpiryAlertReportPageState extends ConsumerState<ExpiryAlertReportPage> {
                             getTitlesWidget: (value, meta) {
                               final categories =
                                   summary.itemsByCategory.keys.toList();
-                              if (value.toInt() < 0 || value.toInt() >= categories.length) {
+                              if (value.toInt() < 0 ||
+                                  value.toInt() >= categories.length) {
                                 return const Text('');
                               }
                               return Padding(
@@ -481,7 +506,8 @@ class _ExpiryAlertReportPageState extends ConsumerState<ExpiryAlertReportPage> {
               toY: count.toDouble(),
               color: AppTheme.darkGreen,
               width: 16,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(4)),
             ),
           ],
         ),
@@ -498,8 +524,10 @@ class _ExpiryAlertReportPageState extends ConsumerState<ExpiryAlertReportPage> {
       children: [
         _buildLegendItem('Expired', Colors.red.shade900, summary.expiredItems),
         _buildLegendItem('Today', Colors.red, summary.expiringTodayItems),
-        _buildLegendItem('Week', Colors.orange, summary.expiringWithinWeekItems),
-        _buildLegendItem('Month', Colors.amber, summary.expiringWithinMonthItems),
+        _buildLegendItem(
+            'Week', Colors.orange, summary.expiringWithinWeekItems),
+        _buildLegendItem(
+            'Month', Colors.amber, summary.expiringWithinMonthItems),
         _buildLegendItem('Safe', AppTheme.limeGreen, summary.safeItems),
       ],
     );
@@ -561,7 +589,10 @@ class _ExpiryAlertReportPageState extends ConsumerState<ExpiryAlertReportPage> {
           children: [
             Text(
               'Alert Items',
-              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.grey.shade700),
+              style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.grey.shade700),
             ),
             const SizedBox(height: 16),
             _buildPaginatedAlertItems(items),
@@ -614,7 +645,8 @@ class _ExpiryAlertReportPageState extends ConsumerState<ExpiryAlertReportPage> {
               ),
               const SizedBox(width: 12),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 decoration: BoxDecoration(
                   color: AppTheme.darkGreen.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
@@ -652,7 +684,8 @@ class _ExpiryAlertReportPageState extends ConsumerState<ExpiryAlertReportPage> {
       child: Container(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: statusColor.withValues(alpha: 0.3), width: 1),
+          border:
+              Border.all(color: statusColor.withValues(alpha: 0.3), width: 1),
         ),
         child: ListTile(
           leading: Container(
@@ -677,7 +710,7 @@ class _ExpiryAlertReportPageState extends ConsumerState<ExpiryAlertReportPage> {
             children: [
               const SizedBox(height: 4),
               Text(
-                '${item.itemCode} • ${item.category} • Qty: ${item.quantity} ${item.measure}',
+                '${item.itemCode} • ${item.category} • Qty: ${QuantityFormatter.formatWithMeasure(item.quantity.toString(), item.measure)}',
                 style: TextStyle(fontSize: 12, color: Colors.grey[600]),
               ),
               const SizedBox(height: 2),
@@ -759,9 +792,8 @@ class _ExpiryAlertReportPageState extends ConsumerState<ExpiryAlertReportPage> {
       }
       // Supplier filter
       if (_selectedSupplier != 'All') {
-        final itemSupplier = item.supplier.trim().isEmpty 
-            ? 'Others' 
-            : item.supplier.trim();
+        final itemSupplier =
+            item.supplier.trim().isEmpty ? 'Others' : item.supplier.trim();
         if (itemSupplier != _selectedSupplier) {
           return false;
         }
@@ -846,9 +878,8 @@ class _ExpiryAlertReportPageState extends ConsumerState<ExpiryAlertReportPage> {
   List<String> _getUniqueSuppliers(List<ExpiryAlertItem> items) {
     final suppliers = <String>{};
     for (final item in items) {
-      final supplier = item.supplier.trim().isEmpty 
-          ? 'Others' 
-          : item.supplier.trim();
+      final supplier =
+          item.supplier.trim().isEmpty ? 'Others' : item.supplier.trim();
       suppliers.add(supplier);
     }
     return suppliers.toList()..sort();

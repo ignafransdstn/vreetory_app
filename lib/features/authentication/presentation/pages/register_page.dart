@@ -57,7 +57,10 @@ class _RegisterPageState extends State<RegisterPage> {
               ),
               const Text(
                 'VreeTory',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22, color: AppTheme.limeGreen),
+                style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 22,
+                    color: AppTheme.limeGreen),
               ),
               const SizedBox(height: 32),
               Container(
@@ -86,7 +89,8 @@ class _RegisterPageState extends State<RegisterPage> {
                         hintText: 'Email',
                         fillColor: AppTheme.cleanWhite,
                         filled: true,
-                        prefixIcon: const Icon(Icons.email, color: AppTheme.limeGreen),
+                        prefixIcon:
+                            const Icon(Icons.email, color: AppTheme.limeGreen),
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -101,12 +105,13 @@ class _RegisterPageState extends State<RegisterPage> {
                         hintText: 'Password',
                         fillColor: AppTheme.cleanWhite,
                         filled: true,
-                        prefixIcon: const Icon(Icons.lock, color: AppTheme.limeGreen),
+                        prefixIcon:
+                            const Icon(Icons.lock, color: AppTheme.limeGreen),
                       ),
                     ),
                     const SizedBox(height: 16),
                     DropdownButtonFormField<String>(
-                      value: selectedRole,
+                      initialValue: selectedRole,
                       decoration: InputDecoration(
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),

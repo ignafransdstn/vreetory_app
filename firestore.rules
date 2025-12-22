@@ -19,6 +19,11 @@ service cloud.firestore {
              get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'user';
     }
     
+    function isApprovedUser() {
+      return isAuthenticated() && 
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.is_approved == true;
+    }
+    
     // Users collection
     match /users/{userId} {
       allow read: if isAuthenticated() && (request.auth.uid == userId || isAdmin());
@@ -30,8 +35,28 @@ service cloud.firestore {
     match /items/{itemId} {
       allow read: if isAuthenticated();
       allow create: if isAuthenticated() && isAdmin();
-      allow update: if isAuthenticated() && (isAdmin() || isUser());
+      // Simplified update rule for debugging
+      allow update: if isAuthenticated() && 
+                       (isAdmin() || 
+                        (isApprovedUser()));
       allow delete: if isAdmin();
+    }
+    
+    // Transactions collection (POS)
+    match /transactions/{transactionId} {
+      // Read: User can read their own transactions, admin can read all
+      allow read: if isAuthenticated() && 
+                     (isAdmin() || 
+                      resource.data.cashier.uid == request.auth.uid);
+      
+      // Create: Admin or approved users can create transactions
+      // Must be their own transaction (cashier.uid matches auth.uid)
+      allow create: if isAuthenticated() &&
+                       (isAdmin() || isApprovedUser()) && 
+                       request.resource.data.cashier.uid == request.auth.uid;
+      
+      // Update & Delete: Admin only
+      allow update, delete: if isAdmin();
     }
     
     // Loss records collection

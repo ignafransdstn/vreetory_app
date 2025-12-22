@@ -8,10 +8,11 @@ enum LowStockStatus {
 class LowStockAlertItem {
   final String itemId;
   final String itemName;
-  final int currentQuantity;
-  final int minimumStock;
+  final double currentQuantity;
+  final double minimumStock;
   final String category;
   final String supplier;
+  final String measure;
   final LowStockStatus status;
   final double stockPercentage; // (currentQuantity / minimumStock) * 100
 
@@ -22,6 +23,7 @@ class LowStockAlertItem {
     required this.minimumStock,
     required this.category,
     required this.supplier,
+    required this.measure,
     required this.status,
     required this.stockPercentage,
   });
@@ -38,7 +40,7 @@ class LowStockAlertItem {
   }
 
   /// Calculate deficit quantity (how much more is needed to reach minimum stock)
-  int get deficitQuantity {
+  double get deficitQuantity {
     final deficit = minimumStock - currentQuantity;
     return deficit > 0 ? deficit : 0;
   }

@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/utils/quantity_formatter.dart';
 import '../providers/loss_provider.dart';
 import '../../domain/entities/loss_record_entity.dart';
 import 'package:intl/intl.dart';
 
 class LossReportPage extends ConsumerStatefulWidget {
-  const LossReportPage({Key? key}) : super(key: key);
+  const LossReportPage({super.key});
 
   @override
   ConsumerState<LossReportPage> createState() => _LossReportPageState();
@@ -32,7 +33,8 @@ class _LossReportPageState extends ConsumerState<LossReportPage> {
       firstDate: DateTime(2020),
       lastDate: DateTime.now(),
       initialDateRange: DateTimeRange(
-        start: selectedStartDate ?? DateTime.now().subtract(const Duration(days: 30)),
+        start: selectedStartDate ??
+            DateTime.now().subtract(const Duration(days: 30)),
         end: selectedEndDate ?? DateTime.now(),
       ),
     );
@@ -118,15 +120,16 @@ class _LossReportPageState extends ConsumerState<LossReportPage> {
 
   @override
   Widget build(BuildContext context) {
-    final lossRecordsAsync = selectedStartDate != null && selectedEndDate != null
-        ? ref.watch(lossRecordsByDateRangeProvider(
-            (selectedStartDate!, selectedEndDate!)))
-        : ref.watch(lossRecordsProvider);
+    final lossRecordsAsync =
+        selectedStartDate != null && selectedEndDate != null
+            ? ref.watch(lossRecordsByDateRangeProvider(
+                (selectedStartDate!, selectedEndDate!)))
+            : ref.watch(lossRecordsProvider);
 
-    final totalLossAsync = ref.watch(
-        totalLossValueProvider((selectedStartDate, selectedEndDate)));
-    final lossByReasonAsync = ref.watch(
-        totalLossByReasonProvider((selectedStartDate, selectedEndDate)));
+    final totalLossAsync =
+        ref.watch(totalLossValueProvider((selectedStartDate, selectedEndDate)));
+    final lossByReasonAsync = ref
+        .watch(totalLossByReasonProvider((selectedStartDate, selectedEndDate)));
 
     return Scaffold(
       backgroundColor: AppTheme.ivoryWhite,
@@ -148,7 +151,8 @@ class _LossReportPageState extends ConsumerState<LossReportPage> {
             children: [
               // Date Range Filter Card
               Card(
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
                 child: Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
@@ -188,7 +192,8 @@ class _LossReportPageState extends ConsumerState<LossReportPage> {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppTheme.darkGreen,
                           foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 8),
                         ),
                       ),
                     ],
@@ -200,7 +205,8 @@ class _LossReportPageState extends ConsumerState<LossReportPage> {
               // Total Loss Card
               totalLossAsync.when(
                 data: (totalLoss) => Card(
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
                   child: _buildTotalLossCard(totalLoss),
                 ),
                 loading: () => const Center(child: CircularProgressIndicator()),
@@ -213,7 +219,8 @@ class _LossReportPageState extends ConsumerState<LossReportPage> {
                 loading: () => const Center(child: CircularProgressIndicator()),
                 error: (err, stack) => _buildErrorWidget(err.toString()),
                 data: (lossByReason) => Card(
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
                   child: Padding(
                     padding: const EdgeInsets.all(16),
                     child: Column(
@@ -237,7 +244,8 @@ class _LossReportPageState extends ConsumerState<LossReportPage> {
                         _buildLossReasonCard(
                           'Damaged/Defective Items',
                           lossByReason['Demaged/Defective']?['quantity'] ?? 0,
-                          lossByReason['Demaged/Defective']?['totalLoss'] ?? 0.0,
+                          lossByReason['Demaged/Defective']?['totalLoss'] ??
+                              0.0,
                           const Color(0xFFFFA500),
                         ),
                         const SizedBox(height: 8),
@@ -256,7 +264,8 @@ class _LossReportPageState extends ConsumerState<LossReportPage> {
 
               // Loss Records List
               Card(
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
                 child: Padding(
                   padding: const EdgeInsets.all(16),
                   child: Column(
@@ -289,12 +298,15 @@ class _LossReportPageState extends ConsumerState<LossReportPage> {
                                   // Calculate pagination
                                   _buildPaginatedLossRecords(records),
                                   // Pagination Controls
-                                  if ((records.length / _itemsPerPage).ceil() > 1)
+                                  if ((records.length / _itemsPerPage).ceil() >
+                                      1)
                                     _buildPaginationControls(records),
                                 ],
                               ),
-                        loading: () => const Center(child: CircularProgressIndicator()),
-                        error: (err, stack) => _buildErrorWidget(err.toString()),
+                        loading: () =>
+                            const Center(child: CircularProgressIndicator()),
+                        error: (err, stack) =>
+                            _buildErrorWidget(err.toString()),
                       ),
                     ],
                   ),
@@ -340,14 +352,14 @@ class _LossReportPageState extends ConsumerState<LossReportPage> {
 
   Widget _buildLossReasonCard(
     String title,
-    int quantity,
+    double quantity,
     double totalLoss,
     Color color,
   ) {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        border: Border.all(color: color.withOpacity(0.3)),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Column(
@@ -388,7 +400,7 @@ class _LossReportPageState extends ConsumerState<LossReportPage> {
           const SizedBox(height: 6),
           // Quantity
           Text(
-            'Qty: $quantity',
+            'Qty: ${QuantityFormatter.format(quantity.toString())}',
             style: TextStyle(
               fontSize: 11,
               color: Colors.grey[600],
@@ -455,7 +467,7 @@ class _LossReportPageState extends ConsumerState<LossReportPage> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: reasonColor.withOpacity(0.1),
+                  color: reasonColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Text(
@@ -534,7 +546,7 @@ class _LossReportPageState extends ConsumerState<LossReportPage> {
 
   Widget _buildPaginationControls(List<LossRecordEntity> records) {
     final totalPages = (records.length / _itemsPerPage).ceil();
-    
+
     return Column(
       children: [
         const SizedBox(height: 16),

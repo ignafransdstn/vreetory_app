@@ -1,0 +1,235 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../domain/entities/transaction_entity.dart';
+import '../../domain/entities/transaction_item_entity.dart';
+import '../../domain/usecases/create_transaction.dart';
+import 'transaction_repository_provider.dart';
+import 'cashier_session_provider.dart';
+import 'cart_provider.dart';
+
+/// Transaction State for checkout process
+class TransactionState {
+  final bool isProcessing;
+  final TransactionEntity? completedTransaction;
+  final String? error;
+  final double progress; // 0.0 to 1.0
+
+  TransactionState({
+    this.isProcessing = false,
+    this.completedTransaction,
+    this.error,
+    this.progress = 0.0,
+  });
+
+  TransactionState copyWith({
+    bool? isProcessing,
+    TransactionEntity? completedTransaction,
+    String? error,
+    double? progress,
+  }) {
+    return TransactionState(
+      isProcessing: isProcessing ?? this.isProcessing,
+      completedTransaction: completedTransaction,
+      error: error,
+      progress: progress ?? this.progress,
+    );
+  }
+
+  factory TransactionState.initial() => TransactionState();
+
+  TransactionState asProcessing(double progress) {
+    return TransactionState(
+      isProcessing: true,
+      completedTransaction: null,
+      error: null,
+      progress: progress,
+    );
+  }
+
+  TransactionState asCompleted(TransactionEntity transaction) {
+    return TransactionState(
+      isProcessing: false,
+      completedTransaction: transaction,
+      error: null,
+      progress: 1.0,
+    );
+  }
+
+  TransactionState asError(String error) {
+    return TransactionState(
+      isProcessing: false,
+      completedTransaction: null,
+      error: error,
+      progress: 0.0,
+    );
+  }
+}
+
+/// Transaction Notifier for handling checkout process
+class TransactionNotifier extends StateNotifier<TransactionState> {
+  final CreateTransaction createTransactionUseCase;
+  final Ref ref;
+
+  TransactionNotifier(this.createTransactionUseCase, this.ref)
+      : super(TransactionState.initial());
+
+  /// Process checkout and create transaction
+  Future<bool> processCheckout({
+    required String paymentMethod,
+    required String amountPaid,
+    String notes = '',
+  }) async {
+    try {
+      // Step 1: Validate cashier session (5%)
+      state = state.asProcessing(0.05);
+      final cashier = ref.read(currentCashierProvider);
+
+      if (cashier == null) {
+        state =
+            state.asError('User tidak login. Silakan login terlebih dahulu.');
+        return false;
+      }
+
+      // Step 2: Get cart items (10%)
+      state = state.asProcessing(0.10);
+      final cartState = ref.read(cartProvider);
+
+      if (cartState.isEmpty) {
+        state = state.asError('Keranjang kosong');
+        return false;
+      }
+
+      // Step 3: Validate cart (20%)
+      state = state.asProcessing(0.20);
+      final validation =
+          await ref.read(cartProvider.notifier).validateCheckout();
+
+      if (validation['valid'] != true) {
+        state = state.asError(validation['message'] ?? 'Validasi gagal');
+        return false;
+      }
+
+      // Step 4: Calculate totals (30%)
+      state = state.asProcessing(0.30);
+      final subtotal = cartState.subtotal;
+      final discount = cartState.discount;
+      final tax = cartState.tax;
+      final totalAmount = cartState.total;
+      final totalProfit = cartState.totalProfit;
+
+      // Step 5: Validate payment (40%)
+      state = state.asProcessing(0.40);
+      final paid = double.parse(amountPaid);
+      if (paid < totalAmount) {
+        state = state.asError(
+          'Jumlah bayar tidak cukup!\n'
+          'Total: Rp ${totalAmount.toStringAsFixed(0)}\n'
+          'Bayar: Rp ${paid.toStringAsFixed(0)}',
+        );
+        return false;
+      }
+      final change = paid - totalAmount;
+
+      // Step 6: Convert cart items to transaction items (50%)
+      state = state.asProcessing(0.50);
+      final transactionItems = cartState.items.map((cartItem) {
+        return TransactionItemEntity(
+          itemId: cartItem.itemId,
+          itemName: cartItem.itemName,
+          itemCode: cartItem.itemCode,
+          category: cartItem.category,
+          measure: cartItem.measure,
+          quantity: cartItem.quantity,
+          previousQuantity: cartItem.availableStock,
+          newQuantity: (double.parse(cartItem.availableStock) -
+                  double.parse(cartItem.quantity))
+              .toString(),
+          buyRate: cartItem.buyRate,
+          sellRate: cartItem.sellRate,
+          unitPrice: cartItem.unitPrice,
+          subtotal: cartItem.subtotal,
+          profit: cartItem.profit,
+        );
+      }).toList();
+
+      // Step 7: Generate transaction number (60%)
+      state = state.asProcessing(0.60);
+      final transactionNumber = CreateTransaction.generateTransactionNumber();
+
+      // Step 8: Create transaction entity (70%)
+      state = state.asProcessing(0.70);
+      final now = DateTime.now();
+      final transaction = TransactionEntity(
+        uid: '', // Will be generated by Firestore
+        transactionNumber: transactionNumber,
+        transactionDate: now,
+        cashier: cashier,
+        items: transactionItems,
+        subtotal: subtotal.toStringAsFixed(0),
+        discount: discount.toStringAsFixed(0),
+        discountPercent: cartState.discountPercent.toStringAsFixed(2),
+        tax: tax.toStringAsFixed(0),
+        totalAmount: totalAmount.toStringAsFixed(0),
+        totalProfit: totalProfit.toStringAsFixed(0),
+        paymentMethod: paymentMethod,
+        amountPaid: amountPaid,
+        change: change.toStringAsFixed(0),
+        status: 'completed',
+        createdAt: now,
+        updatedAt: now,
+        notes: notes,
+      );
+
+      // Step 9: Save transaction and update inventory (90%)
+      state = state.asProcessing(0.90);
+      final savedTransaction = await createTransactionUseCase.call(transaction);
+
+      // Step 10: Clear cart and complete (100%)
+      state = state.asProcessing(0.95);
+      ref.read(cartProvider.notifier).clearCart();
+
+      state = state.asCompleted(savedTransaction);
+      return true;
+    } catch (e) {
+      state = state.asError('Error proses checkout: $e');
+      return false;
+    }
+  }
+
+  /// Reset transaction state
+  void reset() {
+    state = TransactionState.initial();
+  }
+
+  /// Quick cash payment calculation
+  Map<String, dynamic> calculateCashPayment(double total, double amountPaid) {
+    return {
+      'total': total,
+      'paid': amountPaid,
+      'change': amountPaid - total,
+      'isValid': amountPaid >= total,
+    };
+  }
+
+  /// Get suggested payment amounts (for quick buttons)
+  List<double> getSuggestedPayments(double total) {
+    final roundedTotal = (total / 1000).ceil() * 1000;
+
+    return <double>[
+      total, // Exact amount
+      roundedTotal.toDouble(), // Rounded to nearest 1000
+      (roundedTotal + 5000).toDouble(), // +5k
+      (roundedTotal + 10000).toDouble(), // +10k
+      roundedTotal + 10000, // +10k
+      50000, // 50k
+      100000, // 100k
+    ].where((amount) => amount >= total).toList()
+      ..sort();
+  }
+}
+
+/// Transaction Provider
+final transactionProvider =
+    StateNotifierProvider<TransactionNotifier, TransactionState>((ref) {
+  final createTransaction = ref.watch(createTransactionProvider);
+  return TransactionNotifier(createTransaction, ref);
+});

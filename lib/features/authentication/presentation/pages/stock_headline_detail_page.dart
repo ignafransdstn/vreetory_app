@@ -1,18 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import '../../../../core/theme/app_theme.dart';
-import '../../../inventory/domain/entities/item_entity.dart';
-import '../../../inventory/presentation/provider/item_provider.dart';
+import 'package:vreetory_app/core/theme/app_theme.dart';
+import 'package:vreetory_app/features/inventory/domain/entities/item_entity.dart';
+import 'package:vreetory_app/features/inventory/presentation/provider/item_provider.dart';
 
 class StockHeadlineDetailPage extends ConsumerStatefulWidget {
   const StockHeadlineDetailPage({super.key});
 
   @override
-  ConsumerState<StockHeadlineDetailPage> createState() => _StockHeadlineDetailPageState();
+  ConsumerState<StockHeadlineDetailPage> createState() =>
+      _StockHeadlineDetailPageState();
 }
 
-class _StockHeadlineDetailPageState extends ConsumerState<StockHeadlineDetailPage> {
+class _StockHeadlineDetailPageState
+    extends ConsumerState<StockHeadlineDetailPage> {
   @override
   void initState() {
     super.initState();
@@ -89,8 +91,9 @@ class _StockHeadlineDetailPageState extends ConsumerState<StockHeadlineDetailPag
     // Determine if item is truly new (just created) or updated
     // If createdAt == updatedAt, then it's a new item that hasn't been modified
     final isActuallyNew = item.createdAt.isAtSameMomentAs(item.updatedAt);
-    
-    final statusColor = isActuallyNew ? Colors.blue.shade400 : AppTheme.limeGreen;
+
+    final statusColor =
+        isActuallyNew ? Colors.blue.shade400 : AppTheme.limeGreen;
     final statusLabel = isActuallyNew ? 'New' : 'Updated';
     final dateTime = isActuallyNew ? item.createdAt : item.updatedAt;
     final by = isActuallyNew ? item.createdBy : item.updatedBy;
@@ -135,7 +138,8 @@ class _StockHeadlineDetailPageState extends ConsumerState<StockHeadlineDetailPag
                     ),
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
                       color: statusColor.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(6),

@@ -35,6 +35,7 @@ class ItemRepositoryImpl implements ItemRepository {
       updatedBy: item.updatedBy,
       createdAt: item.createdAt,
       updatedAt: item.updatedAt,
+      quantityChangeReason: item.quantityChangeReason,
     );
     await remoteDataSource.createItem(model);
   }
@@ -44,17 +45,17 @@ class ItemRepositoryImpl implements ItemRepository {
     final model = await remoteDataSource.getItem(uid);
     return model;
   }
-  
+
   @override
   Future<void> deleteItem(String uid) {
     return remoteDataSource.deleteItem(uid);
   }
-  
+
   @override
   Future<List<ItemEntity>> getAllItems() {
     return remoteDataSource.getAllItems();
   }
-  
+
   @override
   Future<void> updateItem(ItemEntity item) {
     final model = ItemModel(
@@ -77,6 +78,7 @@ class ItemRepositoryImpl implements ItemRepository {
       updatedBy: item.updatedBy,
       createdAt: item.createdAt,
       updatedAt: item.updatedAt,
+      quantityChangeReason: item.quantityChangeReason,
     );
     return remoteDataSource.updateItem(model);
   }

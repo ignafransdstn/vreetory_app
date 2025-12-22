@@ -1,13 +1,13 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../../data/datasources/item_remote_datasource.dart';
-import '../../data/repositories/item_repository_impl.dart';
-import '../../domain/entities/item_entity.dart';
-import '../../domain/usecase/get_all_item.dart';
-import '../../domain/usecase/get_item.dart';
-import '../../domain/usecase/create_item.dart';
-import '../../domain/usecase/update_item.dart';
-import '../../domain/usecase/delete_item.dart';
+import 'package:vreetory_app/features/inventory/data/datasources/item_remote_datasource.dart';
+import 'package:vreetory_app/features/inventory/data/repositories/item_repository_impl.dart';
+import 'package:vreetory_app/features/inventory/domain/entities/item_entity.dart';
+import 'package:vreetory_app/features/inventory/domain/usecase/get_all_item.dart';
+import 'package:vreetory_app/features/inventory/domain/usecase/get_item.dart';
+import 'package:vreetory_app/features/inventory/domain/usecase/create_item.dart';
+import 'package:vreetory_app/features/inventory/domain/usecase/update_item.dart';
+import 'package:vreetory_app/features/inventory/domain/usecase/delete_item.dart';
 
 class ItemState {
   final List<ItemEntity> items;
@@ -65,12 +65,14 @@ class ItemNotifier extends StateNotifier<ItemState> {
   }) : super(ItemState());
 
   Future<void> fetchAllItems() async {
-    state = state.copyWith(isLoading: true, errorMessage: null, isSuccess: false);
+    state =
+        state.copyWith(isLoading: true, errorMessage: null, isSuccess: false);
     try {
       final items = await getAllItem();
       state = state.copyWith(items: items, isLoading: false, isSuccess: true);
     } catch (e) {
-      state = state.copyWith(isLoading: false, errorMessage: e.toString(), isSuccess: false);
+      state = state.copyWith(
+          isLoading: false, errorMessage: e.toString(), isSuccess: false);
     }
   }
 
@@ -79,10 +81,11 @@ class ItemNotifier extends StateNotifier<ItemState> {
     if (query.isEmpty) {
       await fetchAllItems();
     } else {
-      final filtered = state.items.where((item) =>
-        item.itemName.toLowerCase().contains(query.toLowerCase()) ||
-        item.itemCode.toLowerCase().contains(query.toLowerCase())
-      ).toList();
+      final filtered = state.items
+          .where((item) =>
+              item.itemName.toLowerCase().contains(query.toLowerCase()) ||
+              item.itemCode.toLowerCase().contains(query.toLowerCase()))
+          .toList();
       state = state.copyWith(items: filtered);
     }
   }
@@ -102,10 +105,12 @@ class ItemNotifier extends StateNotifier<ItemState> {
   }
 
   Future<void> createNewItem(ItemEntity item) async {
-    state = state.copyWith(isLoading: true, errorMessage: null, isSuccess: false);
+    state =
+        state.copyWith(isLoading: true, errorMessage: null, isSuccess: false);
     final errors = _validateItem(item);
     if (errors.isNotEmpty) {
-      state = state.copyWith(isLoading: false, formErrors: errors, isSuccess: false);
+      state = state.copyWith(
+          isLoading: false, formErrors: errors, isSuccess: false);
       return;
     }
     try {
@@ -113,15 +118,18 @@ class ItemNotifier extends StateNotifier<ItemState> {
       state = state.copyWith(isLoading: false, isSuccess: true, formErrors: {});
       await fetchAllItems();
     } catch (e) {
-      state = state.copyWith(isLoading: false, errorMessage: e.toString(), isSuccess: false);
+      state = state.copyWith(
+          isLoading: false, errorMessage: e.toString(), isSuccess: false);
     }
   }
 
   Future<void> updateExistingItem(ItemEntity item) async {
-    state = state.copyWith(isLoading: true, errorMessage: null, isSuccess: false);
+    state =
+        state.copyWith(isLoading: true, errorMessage: null, isSuccess: false);
     final errors = _validateItem(item);
     if (errors.isNotEmpty) {
-      state = state.copyWith(isLoading: false, formErrors: errors, isSuccess: false);
+      state = state.copyWith(
+          isLoading: false, formErrors: errors, isSuccess: false);
       return;
     }
     try {
@@ -129,18 +137,21 @@ class ItemNotifier extends StateNotifier<ItemState> {
       state = state.copyWith(isLoading: false, isSuccess: true, formErrors: {});
       await fetchAllItems();
     } catch (e) {
-      state = state.copyWith(isLoading: false, errorMessage: e.toString(), isSuccess: false);
+      state = state.copyWith(
+          isLoading: false, errorMessage: e.toString(), isSuccess: false);
     }
   }
 
   Future<void> deleteExistingItem(String uid) async {
-    state = state.copyWith(isLoading: true, errorMessage: null, isSuccess: false);
+    state =
+        state.copyWith(isLoading: true, errorMessage: null, isSuccess: false);
     try {
       await deleteItem(uid);
       state = state.copyWith(isLoading: false, isSuccess: true);
       await fetchAllItems();
     } catch (e) {
-      state = state.copyWith(isLoading: false, errorMessage: e.toString(), isSuccess: false);
+      state = state.copyWith(
+          isLoading: false, errorMessage: e.toString(), isSuccess: false);
     }
   }
 
@@ -168,4 +179,11 @@ final itemProvider = StateNotifierProvider<ItemNotifier, ItemState>((ref) {
     updateItem: UpdateItem(repository),
     deleteItem: DeleteItem(repository),
   );
+});
+
+// Item Repository Provider for use in other features
+final itemRepositoryProvider = Provider((ref) {
+  final firestore = FirebaseFirestore.instance;
+  final remoteDataSource = ItemRemoteDataSource(firestore);
+  return ItemRepositoryImpl(remoteDataSource);
 });

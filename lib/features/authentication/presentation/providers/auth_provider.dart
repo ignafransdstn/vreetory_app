@@ -41,25 +41,31 @@ class AuthNotifier extends StateNotifier<AuthState> {
     final firebaseUser = FirebaseAuth.instance.currentUser;
     if (firebaseUser != null) {
       final firestore = FirebaseFirestore.instance;
-      final doc = await firestore.collection('users').doc(firebaseUser.uid).get();
+      final doc =
+          await firestore.collection('users').doc(firebaseUser.uid).get();
       if (doc.exists) {
         final data = doc.data()!;
         final userEntity = UserEntity(
           uid: data['uid'],
           email: data['email'],
           role: data['role'],
-          adminRequest: data.containsKey('adminRequest') ? data['adminRequest'] : false,
-          isApproved: data.containsKey('isApproved') ? data['isApproved'] : false,
-          createdAt: data.containsKey('created_at') && data['created_at'] is Timestamp
-              ? (data['created_at'] as Timestamp).toDate()
-              : DateTime.now(),
-          approvedAt: data.containsKey('approved_at') && data['approved_at'] is Timestamp
+          adminRequest:
+              data.containsKey('admin_request') ? data['admin_request'] : false,
+          isApproved:
+              data.containsKey('is_approved') ? data['is_approved'] : false,
+          createdAt:
+              data.containsKey('created_at') && data['created_at'] is Timestamp
+                  ? (data['created_at'] as Timestamp).toDate()
+                  : DateTime.now(),
+          approvedAt: data.containsKey('approved_at') &&
+                  data['approved_at'] is Timestamp
               ? (data['approved_at'] as Timestamp).toDate()
               : null,
           name: data['name'] as String?,
           phone: data['phone'] as String?,
         );
-        state = state.copyWith(status: AuthStatus.authenticated, user: userEntity, error: null);
+        state = state.copyWith(
+            status: AuthStatus.authenticated, user: userEntity, error: null);
       }
     }
   }
@@ -67,10 +73,12 @@ class AuthNotifier extends StateNotifier<AuthState> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  Future<void> signIn(BuildContext context, String email, String password) async {
+  Future<void> signIn(
+      BuildContext context, String email, String password) async {
     state = state.copyWith(status: AuthStatus.loading, error: null);
     try {
-      final credential = await _auth.signInWithEmailAndPassword(email: email, password: password);
+      final credential = await _auth.signInWithEmailAndPassword(
+          email: email, password: password);
       final user = credential.user;
       if (user != null) {
         final doc = await _firestore.collection('users').doc(user.uid).get();
@@ -80,21 +88,27 @@ class AuthNotifier extends StateNotifier<AuthState> {
             uid: data['uid'],
             email: data['email'],
             role: data['role'],
-            adminRequest: data.containsKey('adminRequest') ? data['adminRequest'] : false,
-            isApproved: data.containsKey('isApproved') ? data['isApproved'] : false,
-            createdAt: data.containsKey('created_at') && data['created_at'] is Timestamp
+            adminRequest: data.containsKey('admin_request')
+                ? data['admin_request']
+                : false,
+            isApproved:
+                data.containsKey('is_approved') ? data['is_approved'] : false,
+            createdAt: data.containsKey('created_at') &&
+                    data['created_at'] is Timestamp
                 ? (data['created_at'] as Timestamp).toDate()
                 : DateTime.now(),
-            approvedAt: data.containsKey('approved_at') && data['approved_at'] is Timestamp
+            approvedAt: data.containsKey('approved_at') &&
+                    data['approved_at'] is Timestamp
                 ? (data['approved_at'] as Timestamp).toDate()
                 : null,
             name: data['name'] as String?,
             phone: data['phone'] as String?,
           );
-          
+
           // Update state with new user
-          state = state.copyWith(status: AuthStatus.authenticated, user: userEntity, error: null);
-          
+          state = state.copyWith(
+              status: AuthStatus.authenticated, user: userEntity, error: null);
+
           final role = data['role'];
 
           if (role == 'admin') {
@@ -134,7 +148,10 @@ class AuthNotifier extends StateNotifier<AuthState> {
       await usecase(userEntity);
       state = state.copyWith(status: AuthStatus.authenticated);
     } on FirebaseAuthException catch (e) {
-      state = state.copyWith(status: AuthStatus.error, error: e.message ?? e.toString(),);
+      state = state.copyWith(
+        status: AuthStatus.error,
+        error: e.message ?? e.toString(),
+      );
     } catch (e) {
       state = state.copyWith(status: AuthStatus.error, error: e.toString());
     }
@@ -169,4 +186,5 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 }
 
-final authProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) => AuthNotifier());
+final authProvider =
+    StateNotifierProvider<AuthNotifier, AuthState>((ref) => AuthNotifier());

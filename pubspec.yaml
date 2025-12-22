@@ -38,18 +38,19 @@ dependencies:
   firebase_core: ^2.27.0
   cloud_firestore: ^4.15.4
   firebase_auth: ^4.17.4
+  firebase_storage: ^11.6.0
   flutter_riverpod: ^2.6.1
   intl: ^0.18.1
   fl_chart: ^0.69.0
   flutter_launcher_icons: ^0.14.4
+  pdf: ^3.10.7
+  printing: ^5.11.1
+  share_plus: ^7.2.1
+  excel: ^4.0.6
+  path_provider: ^2.1.1
+  image_picker: ^1.0.7
 
 dev_dependencies:
-  
-flutter_launcher_icons:
-  android: "launcher_icon"
-  ios: true
-  image_path: "assets/images/asset1.png"
-  min_sdk_android: 21
   flutter_test:
     sdk: flutter
 
@@ -59,6 +60,12 @@ flutter_launcher_icons:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^4.0.0
+  
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "assets/images/asset1.png"
+  min_sdk_android: 21
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

@@ -6,6 +6,7 @@ import 'stock_valuation_report_page.dart';
 import 'expiry_alert_report_page.dart';
 import 'inventory_movement_report_page.dart';
 import 'loss_report_page.dart';
+import 'sales_report_page.dart';
 import '../../../inventory/presentation/pages/low_stock_alert_report_page.dart';
 
 class ReportingPage extends ConsumerWidget {
@@ -34,6 +35,24 @@ class ReportingPage extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              // Sales Report - Only visible for Admin
+              if (isAdmin)
+                Column(
+                  children: [
+                    ReportCard(
+                      title: 'Sales Report',
+                      subtitle: 'Daily & monthly sales analysis',
+                      icon: Icons.point_of_sale,
+                      color: const Color(0xFF4CAF50),
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (_) => const SalesReportPage()),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+                ),
               // Stock Valuation Report - Only visible for Admin
               if (isAdmin)
                 Column(
@@ -45,7 +64,8 @@ class ReportingPage extends ConsumerWidget {
                       color: Colors.blue,
                       onTap: () => Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (_) => const StockValuationReportPage()),
+                        MaterialPageRoute(
+                            builder: (_) => const StockValuationReportPage()),
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -59,7 +79,8 @@ class ReportingPage extends ConsumerWidget {
                 color: Colors.orange,
                 onTap: () => Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (_) => const ExpiryAlertReportPage()),
+                  MaterialPageRoute(
+                      builder: (_) => const ExpiryAlertReportPage()),
                 ),
               ),
               const SizedBox(height: 16),
@@ -71,7 +92,8 @@ class ReportingPage extends ConsumerWidget {
                 color: Colors.green,
                 onTap: () => Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (_) => const InventoryMovementReportPage()),
+                  MaterialPageRoute(
+                      builder: (_) => const InventoryMovementReportPage()),
                 ),
               ),
               const SizedBox(height: 16),
@@ -83,7 +105,8 @@ class ReportingPage extends ConsumerWidget {
                 color: Colors.red,
                 onTap: () => Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (_) => const LowStockAlertReportPage()),
+                  MaterialPageRoute(
+                      builder: (_) => const LowStockAlertReportPage()),
                 ),
               ),
               const SizedBox(height: 16),
@@ -114,7 +137,8 @@ class ReportCard extends StatelessWidget {
   final Color color;
   final VoidCallback onTap;
 
-  const ReportCard({super.key, 
+  const ReportCard({
+    super.key,
     required this.title,
     required this.subtitle,
     required this.icon,

@@ -18,6 +18,7 @@ class AdminProfilePage extends ConsumerStatefulWidget {
 class _AdminProfilePageState extends ConsumerState<AdminProfilePage> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
+  // ignore: unused_element
   Future<void> _approveRequest(String uid, String email) async {
     final userRequestRef = _firestore.collection('usersRequest').doc(uid);
     final userRef = _firestore.collection('users').doc(uid);
@@ -26,7 +27,8 @@ class _AdminProfilePageState extends ConsumerState<AdminProfilePage> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Approve Admin Request'),
-        content: Text('Do you want approve $email? This user will become an admin.'),
+        content:
+            Text('Do you want approve $email? This user will become an admin.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -55,6 +57,7 @@ class _AdminProfilePageState extends ConsumerState<AdminProfilePage> {
     }
   }
 
+  // ignore: unused_element
   Future<void> _rejectRequest(String uid, String email) async {
     final userRequestRef = _firestore.collection('usersRequest').doc(uid);
 
@@ -91,7 +94,7 @@ class _AdminProfilePageState extends ConsumerState<AdminProfilePage> {
     try {
       // Total users - count all users in the database (both admin and user roles)
       final usersSnapshot = await _firestore.collection('users').count().get();
-      
+
       // Admin requests - count pending requests (status == false in usersRequest)
       final requestsSnapshot = await _firestore
           .collection('usersRequest')
@@ -222,7 +225,8 @@ class _AdminProfilePageState extends ConsumerState<AdminProfilePage> {
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    prefixIcon: const Icon(Icons.person, color: AppTheme.darkGreen),
+                    prefixIcon:
+                        const Icon(Icons.person, color: AppTheme.darkGreen),
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -236,7 +240,8 @@ class _AdminProfilePageState extends ConsumerState<AdminProfilePage> {
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    prefixIcon: const Icon(Icons.phone, color: AppTheme.darkGreen),
+                    prefixIcon:
+                        const Icon(Icons.phone, color: AppTheme.darkGreen),
                   ),
                 ),
               ],
@@ -251,8 +256,12 @@ class _AdminProfilePageState extends ConsumerState<AdminProfilePage> {
               onPressed: () async {
                 try {
                   await _firestore.collection('users').doc(admin.uid).update({
-                    'name': nameController.text.trim().isEmpty ? null : nameController.text.trim(),
-                    'phone': phoneController.text.trim().isEmpty ? null : phoneController.text.trim(),
+                    'name': nameController.text.trim().isEmpty
+                        ? null
+                        : nameController.text.trim(),
+                    'phone': phoneController.text.trim().isEmpty
+                        ? null
+                        : phoneController.text.trim(),
                   });
 
                   if (mounted) {
@@ -335,7 +344,9 @@ class _AdminProfilePageState extends ConsumerState<AdminProfilePage> {
                                 ),
                                 child: Center(
                                   child: Text(
-                                    admin.email.isNotEmpty ? admin.email[0].toUpperCase() : 'A',
+                                    admin.email.isNotEmpty
+                                        ? admin.email[0].toUpperCase()
+                                        : 'A',
                                     style: const TextStyle(
                                       fontSize: 36,
                                       fontWeight: FontWeight.bold,
@@ -363,7 +374,8 @@ class _AdminProfilePageState extends ConsumerState<AdminProfilePage> {
                                   color: Colors.grey,
                                 ),
                               ),
-                              if (admin.phone != null && admin.phone!.isNotEmpty)
+                              if (admin.phone != null &&
+                                  admin.phone!.isNotEmpty)
                                 Column(
                                   children: [
                                     const SizedBox(height: 4),
@@ -410,7 +422,8 @@ class _AdminProfilePageState extends ConsumerState<AdminProfilePage> {
                               const Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Icon(Icons.edit, size: 14, color: AppTheme.brightYellow),
+                                  Icon(Icons.edit,
+                                      size: 14, color: AppTheme.brightYellow),
                                   SizedBox(width: 4),
                                   Text(
                                     'Tap to edit profile',
@@ -442,7 +455,8 @@ class _AdminProfilePageState extends ConsumerState<AdminProfilePage> {
                     FutureBuilder<Map<String, int>>(
                       future: _getAdminStats(),
                       builder: (context, snapshot) {
-                        if (snapshot.connectionState == ConnectionState.waiting) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
                           return const CircularProgressIndicator();
                         }
 
@@ -506,7 +520,7 @@ class _AdminProfilePageState extends ConsumerState<AdminProfilePage> {
       child: Container(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(12),
-          color: color.withOpacity(0.1),
+          color: color.withValues(alpha: 0.1),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -534,13 +548,14 @@ class _AdminProfilePageState extends ConsumerState<AdminProfilePage> {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.touch_app, size: 12, color: color.withOpacity(0.6)),
+                Icon(Icons.touch_app,
+                    size: 12, color: color.withValues(alpha: 0.6)),
                 const SizedBox(width: 4),
                 Text(
                   'Tap For Detail',
                   style: TextStyle(
                     fontSize: 9,
-                    color: color.withOpacity(0.7),
+                    color: color.withValues(alpha: 0.7),
                     fontStyle: FontStyle.italic,
                   ),
                 ),

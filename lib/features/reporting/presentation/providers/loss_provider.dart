@@ -9,8 +9,7 @@ final lossRecordRemoteDataSourceProvider =
   return LossRecordRemoteDataSource(FirebaseFirestore.instance);
 });
 
-final lossRecordsProvider =
-    FutureProvider<List<LossRecordEntity>>((ref) async {
+final lossRecordsProvider = FutureProvider<List<LossRecordEntity>>((ref) async {
   final dataSource = ref.watch(lossRecordRemoteDataSourceProvider);
   final records = await dataSource.getAllLossRecords();
   return records.cast<LossRecordEntity>();
@@ -36,7 +35,8 @@ final lossRecordsByReasonProvider =
 final totalLossValueProvider =
     FutureProvider.family<double, (DateTime?, DateTime?)>((ref, params) async {
   final records = params.$1 != null && params.$2 != null
-      ? await ref.watch(lossRecordsByDateRangeProvider((params.$1!, params.$2!)).future)
+      ? await ref.watch(
+          lossRecordsByDateRangeProvider((params.$1!, params.$2!)).future)
       : await ref.watch(lossRecordsProvider.future);
   double total = 0;
   for (final record in records) {
@@ -45,24 +45,25 @@ final totalLossValueProvider =
   return total;
 });
 
-final totalLossByReasonProvider =
-    FutureProvider.family<Map<String, Map<String, dynamic>>, (DateTime?, DateTime?)>(
-        (ref, params) async {
+final totalLossByReasonProvider = FutureProvider.family<
+    Map<String, Map<String, dynamic>>,
+    (DateTime?, DateTime?)>((ref, params) async {
   final records = params.$1 != null && params.$2 != null
-      ? await ref.watch(lossRecordsByDateRangeProvider((params.$1!, params.$2!)).future)
+      ? await ref.watch(
+          lossRecordsByDateRangeProvider((params.$1!, params.$2!)).future)
       : await ref.watch(lossRecordsProvider.future);
   final resultMap = <String, Map<String, dynamic>>{
-    'Expired': {'quantity': 0, 'totalLoss': 0.0},
-    'Demaged/Defective': {'quantity': 0, 'totalLoss': 0.0},
-    'Lost': {'quantity': 0, 'totalLoss': 0.0},
+    'Expired': {'quantity': 0.0, 'totalLoss': 0.0},
+    'Demaged/Defective': {'quantity': 0.0, 'totalLoss': 0.0},
+    'Lost': {'quantity': 0.0, 'totalLoss': 0.0},
   };
 
   for (final record in records) {
     final reason = record.reasonType;
     if (resultMap.containsKey(reason)) {
       resultMap[reason]!['quantity'] =
-          (resultMap[reason]!['quantity'] as int) +
-              (int.tryParse(record.quantityLost) ?? 0);
+          (resultMap[reason]!['quantity'] as double) +
+              (double.tryParse(record.quantityLost) ?? 0.0);
       resultMap[reason]!['totalLoss'] =
           (resultMap[reason]!['totalLoss'] as double) +
               (double.tryParse(record.totalLoss) ?? 0.0);
@@ -72,8 +73,8 @@ final totalLossByReasonProvider =
   return resultMap;
 });
 
-final createLossRecordProvider = FutureProvider.family<void, LossRecordModel>(
-    (ref, record) async {
+final createLossRecordProvider =
+    FutureProvider.family<void, LossRecordModel>((ref, record) async {
   final dataSource = ref.watch(lossRecordRemoteDataSourceProvider);
   await dataSource.createLossRecord(record as LossRecordEntity);
   // Refresh the records after creating - invalidate all dependent providers

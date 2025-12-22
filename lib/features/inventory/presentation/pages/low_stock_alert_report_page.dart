@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/utils/quantity_formatter.dart';
 import '../providers/low_stock_provider.dart';
 import '../../domain/entities/low_stock_alert_item.dart';
 
@@ -13,7 +14,8 @@ class LowStockAlertReportPage extends ConsumerStatefulWidget {
       _LowStockAlertReportPageState();
 }
 
-class _LowStockAlertReportPageState extends ConsumerState<LowStockAlertReportPage> {
+class _LowStockAlertReportPageState
+    extends ConsumerState<LowStockAlertReportPage> {
   int _currentPage = 0;
   static const int _itemsPerPage = 5;
 
@@ -102,7 +104,8 @@ class _LowStockAlertReportPageState extends ConsumerState<LowStockAlertReportPag
                 title: 'Critical',
                 count: stats.critical,
                 color: Colors.red,
-                percentage: stats.total > 0 ? (stats.critical / stats.total * 100) : 0,
+                percentage:
+                    stats.total > 0 ? (stats.critical / stats.total * 100) : 0,
               ),
             ),
             const SizedBox(width: 12),
@@ -111,7 +114,8 @@ class _LowStockAlertReportPageState extends ConsumerState<LowStockAlertReportPag
                 title: 'Warning',
                 count: stats.warning,
                 color: Colors.orange,
-                percentage: stats.total > 0 ? (stats.warning / stats.total * 100) : 0,
+                percentage:
+                    stats.total > 0 ? (stats.warning / stats.total * 100) : 0,
               ),
             ),
             const SizedBox(width: 12),
@@ -120,7 +124,8 @@ class _LowStockAlertReportPageState extends ConsumerState<LowStockAlertReportPag
                 title: 'Normal',
                 count: stats.normal,
                 color: Colors.green,
-                percentage: stats.total > 0 ? (stats.normal / stats.total * 100) : 0,
+                percentage:
+                    stats.total > 0 ? (stats.normal / stats.total * 100) : 0,
               ),
             ),
           ],
@@ -161,7 +166,8 @@ class _LowStockAlertReportPageState extends ConsumerState<LowStockAlertReportPag
             // Category filter
             categoriesAsync.when(
               data: (categories) => _buildCategoryFilter(ref, categories),
-              loading: () => const SizedBox(height: 40, child: CircularProgressIndicator()),
+              loading: () => const SizedBox(
+                  height: 40, child: CircularProgressIndicator()),
               error: (err, _) => Text('Error loading categories: $err'),
             ),
             const SizedBox(height: 12),
@@ -169,7 +175,8 @@ class _LowStockAlertReportPageState extends ConsumerState<LowStockAlertReportPag
             // Supplier filter
             suppliersAsync.when(
               data: (suppliers) => _buildSupplierFilter(ref, suppliers),
-              loading: () => const SizedBox(height: 40, child: CircularProgressIndicator()),
+              loading: () => const SizedBox(
+                  height: 40, child: CircularProgressIndicator()),
               error: (err, _) => Text('Error loading suppliers: $err'),
             ),
           ],
@@ -200,9 +207,7 @@ class _LowStockAlertReportPageState extends ConsumerState<LowStockAlertReportPag
                 } else {
                   updated.remove(LowStockStatus.critical);
                 }
-                ref
-                    .read(lowStockStatusFilterProvider.notifier)
-                    .state = updated;
+                ref.read(lowStockStatusFilterProvider.notifier).state = updated;
                 setState(() => _currentPage = 0);
               },
               color: Colors.red,
@@ -217,9 +222,7 @@ class _LowStockAlertReportPageState extends ConsumerState<LowStockAlertReportPag
                 } else {
                   updated.remove(LowStockStatus.warning);
                 }
-                ref
-                    .read(lowStockStatusFilterProvider.notifier)
-                    .state = updated;
+                ref.read(lowStockStatusFilterProvider.notifier).state = updated;
                 setState(() => _currentPage = 0);
               },
               color: Colors.orange,
@@ -234,9 +237,7 @@ class _LowStockAlertReportPageState extends ConsumerState<LowStockAlertReportPag
                 } else {
                   updated.remove(LowStockStatus.normal);
                 }
-                ref
-                    .read(lowStockStatusFilterProvider.notifier)
-                    .state = updated;
+                ref.read(lowStockStatusFilterProvider.notifier).state = updated;
                 setState(() => _currentPage = 0);
               },
               color: Colors.green,
@@ -266,7 +267,8 @@ class _LowStockAlertReportPageState extends ConsumerState<LowStockAlertReportPag
             underline: const SizedBox(),
             hint: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12),
-              child: Text('Select category', style: TextStyle(color: Colors.grey[600])),
+              child: Text('Select category',
+                  style: TextStyle(color: Colors.grey[600])),
             ),
             value: null,
             items: categories.map((category) {
@@ -282,7 +284,8 @@ class _LowStockAlertReportPageState extends ConsumerState<LowStockAlertReportPag
               if (selected != null && !selectedCategories.contains(selected)) {
                 final updated = List<String>.from(selectedCategories);
                 updated.add(selected);
-                ref.read(lowStockCategoryFilterProvider.notifier).state = updated;
+                ref.read(lowStockCategoryFilterProvider.notifier).state =
+                    updated;
                 setState(() => _currentPage = 0);
               }
             },
@@ -299,7 +302,8 @@ class _LowStockAlertReportPageState extends ConsumerState<LowStockAlertReportPag
                 onDeleted: () {
                   final updated = List<String>.from(selectedCategories);
                   updated.remove(category);
-                  ref.read(lowStockCategoryFilterProvider.notifier).state = updated;
+                  ref.read(lowStockCategoryFilterProvider.notifier).state =
+                      updated;
                   setState(() => _currentPage = 0);
                 },
               );
@@ -329,7 +333,8 @@ class _LowStockAlertReportPageState extends ConsumerState<LowStockAlertReportPag
             underline: const SizedBox(),
             hint: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12),
-              child: Text('Select supplier', style: TextStyle(color: Colors.grey[600])),
+              child: Text('Select supplier',
+                  style: TextStyle(color: Colors.grey[600])),
             ),
             value: null,
             items: suppliers.map((supplier) {
@@ -345,7 +350,8 @@ class _LowStockAlertReportPageState extends ConsumerState<LowStockAlertReportPag
               if (selected != null && !selectedSuppliers.contains(selected)) {
                 final updated = List<String>.from(selectedSuppliers);
                 updated.add(selected);
-                ref.read(lowStockSupplierFilterProvider.notifier).state = updated;
+                ref.read(lowStockSupplierFilterProvider.notifier).state =
+                    updated;
                 setState(() => _currentPage = 0);
               }
             },
@@ -362,7 +368,8 @@ class _LowStockAlertReportPageState extends ConsumerState<LowStockAlertReportPag
                 onDeleted: () {
                   final updated = List<String>.from(selectedSuppliers);
                   updated.remove(supplier);
-                  ref.read(lowStockSupplierFilterProvider.notifier).state = updated;
+                  ref.read(lowStockSupplierFilterProvider.notifier).state =
+                      updated;
                   setState(() => _currentPage = 0);
                 },
               );
@@ -403,7 +410,10 @@ class _LowStockAlertReportPageState extends ConsumerState<LowStockAlertReportPag
           children: [
             Text(
               'Distribution by Status',
-              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.grey.shade700),
+              style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.grey.shade700),
             ),
             const SizedBox(height: 16),
             SizedBox(
@@ -571,7 +581,8 @@ class _LowStockAlertReportPageState extends ConsumerState<LowStockAlertReportPag
                   ),
                   const SizedBox(width: 12),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     decoration: BoxDecoration(
                       color: AppTheme.darkGreen.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(8),
@@ -648,18 +659,42 @@ class _LowStockAlertReportPageState extends ConsumerState<LowStockAlertReportPag
           ),
           Expanded(
             flex: 1,
-            child: Text(
-              item.currentQuantity.toString(),
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodyMedium,
+            child: Column(
+              children: [
+                Text(
+                  QuantityFormatter.format(item.currentQuantity.toString()),
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
+                Text(
+                  item.measure.toLowerCase(),
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Colors.grey[600],
+                        fontSize: 10,
+                      ),
+                ),
+              ],
             ),
           ),
           Expanded(
             flex: 1,
-            child: Text(
-              item.minimumStock.toString(),
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodyMedium,
+            child: Column(
+              children: [
+                Text(
+                  QuantityFormatter.format(item.minimumStock.toString()),
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
+                Text(
+                  item.measure.toLowerCase(),
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Colors.grey[600],
+                        fontSize: 10,
+                      ),
+                ),
+              ],
             ),
           ),
           Expanded(

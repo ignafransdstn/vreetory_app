@@ -5,7 +5,7 @@ class ExpiryAlertItem {
   final String itemName;
   final String itemCode;
   final String category;
-  final int quantity;
+  final double quantity;
   final DateTime expiryDate;
   final String measure;
   final String supplier;
@@ -97,14 +97,14 @@ class ExpiryAlertSummary {
       expiringWithinMonthItems;
 
   // Get total quantity at risk
-  int get totalAtRiskQuantity {
+  double get totalAtRiskQuantity {
     return allItems
         .where((item) =>
             item.expiryStatus == ExpiryStatus.expired ||
             item.expiryStatus == ExpiryStatus.expiringToday ||
             item.expiryStatus == ExpiryStatus.expiringWithinWeek ||
             item.expiryStatus == ExpiryStatus.expiringWithinMonth)
-        .fold(0, (sum, item) => sum + item.quantity);
+        .fold(0.0, (sum, item) => sum + item.quantity);
   }
 
   // Get risk percentage

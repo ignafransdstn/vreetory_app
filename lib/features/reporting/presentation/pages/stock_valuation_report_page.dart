@@ -11,10 +11,12 @@ class StockValuationReportPage extends ConsumerStatefulWidget {
   const StockValuationReportPage({super.key});
 
   @override
-  ConsumerState<StockValuationReportPage> createState() => _StockValuationReportPageState();
+  ConsumerState<StockValuationReportPage> createState() =>
+      _StockValuationReportPageState();
 }
 
-class _StockValuationReportPageState extends ConsumerState<StockValuationReportPage> {
+class _StockValuationReportPageState
+    extends ConsumerState<StockValuationReportPage> {
   String _selectedCategory = 'All';
   String _selectedStatus = 'All';
   String _selectedSupplier = 'All';
@@ -105,42 +107,49 @@ class _StockValuationReportPageState extends ConsumerState<StockValuationReportP
             const SizedBox(height: 12),
             // Category Filter
             DropdownButtonFormField<String>(
-              value: _selectedCategory,
+              initialValue: _selectedCategory,
               items: ['All', ...categories]
                   .map((cat) => DropdownMenuItem(value: cat, child: Text(cat)))
                   .toList(),
-              onChanged: (value) => setState(() => _selectedCategory = value ?? 'All'),
+              onChanged: (value) =>
+                  setState(() => _selectedCategory = value ?? 'All'),
               decoration: InputDecoration(
                 labelText: 'Category',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                border:
+                    OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
                 isDense: true,
               ),
             ),
             const SizedBox(height: 12),
             // Status Filter
             DropdownButtonFormField<String>(
-              value: _selectedStatus,
+              initialValue: _selectedStatus,
               items: ['All', 'Active', 'Inactive']
-                  .map((status) => DropdownMenuItem(value: status, child: Text(status)))
+                  .map((status) =>
+                      DropdownMenuItem(value: status, child: Text(status)))
                   .toList(),
-              onChanged: (value) => setState(() => _selectedStatus = value ?? 'All'),
+              onChanged: (value) =>
+                  setState(() => _selectedStatus = value ?? 'All'),
               decoration: InputDecoration(
                 labelText: 'Status',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                border:
+                    OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
                 isDense: true,
               ),
             ),
             const SizedBox(height: 12),
             // Supplier Filter
             DropdownButtonFormField<String>(
-              value: _selectedSupplier,
+              initialValue: _selectedSupplier,
               items: ['All', ...suppliers]
                   .map((sup) => DropdownMenuItem(value: sup, child: Text(sup)))
                   .toList(),
-              onChanged: (value) => setState(() => _selectedSupplier = value ?? 'All'),
+              onChanged: (value) =>
+                  setState(() => _selectedSupplier = value ?? 'All'),
               decoration: InputDecoration(
                 labelText: 'Supplier',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                border:
+                    OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
                 isDense: true,
               ),
             ),
@@ -192,7 +201,8 @@ class _StockValuationReportPageState extends ConsumerState<StockValuationReportP
             Expanded(
               child: _buildSummaryCard(
                 title: 'Profit Margin',
-                value: '${summary.totalProfitMarginPercent.toStringAsFixed(2)}%',
+                value:
+                    '${summary.totalProfitMarginPercent.toStringAsFixed(2)}%',
                 color: Colors.orange.shade600,
                 icon: Icons.percent,
               ),
@@ -238,7 +248,10 @@ class _StockValuationReportPageState extends ConsumerState<StockValuationReportP
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(12),
           gradient: LinearGradient(
-            colors: [color.withValues(alpha: 0.1), color.withValues(alpha: 0.05)],
+            colors: [
+              color.withValues(alpha: 0.1),
+              color.withValues(alpha: 0.05)
+            ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
@@ -301,7 +314,8 @@ class _StockValuationReportPageState extends ConsumerState<StockValuationReportP
         // Pie Chart - Distribution by Category
         Card(
           elevation: 1,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
@@ -309,7 +323,10 @@ class _StockValuationReportPageState extends ConsumerState<StockValuationReportP
               children: [
                 Text(
                   'Distribution by Category',
-                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.grey.shade700),
+                  style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.grey.shade700),
                 ),
                 const SizedBox(height: 16),
                 SizedBox(
@@ -337,7 +354,8 @@ class _StockValuationReportPageState extends ConsumerState<StockValuationReportP
         // Bar Chart - Top 10 Items by Value
         Card(
           elevation: 1,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
@@ -345,7 +363,10 @@ class _StockValuationReportPageState extends ConsumerState<StockValuationReportP
               children: [
                 Text(
                   'Top 10 Items by Inventory Value',
-                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.grey.shade700),
+                  style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.grey.shade700),
                 ),
                 const SizedBox(height: 16),
                 SizedBox(
@@ -361,10 +382,13 @@ class _StockValuationReportPageState extends ConsumerState<StockValuationReportP
                           sideTitles: SideTitles(
                             showTitles: true,
                             getTitlesWidget: (double value, TitleMeta meta) {
-                              if (value.toInt() < summary.topItemsByValue.length) {
-                                final item = summary.topItemsByValue[value.toInt()];
+                              if (value.toInt() <
+                                  summary.topItemsByValue.length) {
+                                final item =
+                                    summary.topItemsByValue[value.toInt()];
                                 return Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 0),
+                                  padding:
+                                      const EdgeInsets.symmetric(horizontal: 0),
                                   child: Transform.rotate(
                                     angle: -1.5708, // -90 degrees
                                     alignment: Alignment.center,
@@ -400,7 +424,8 @@ class _StockValuationReportPageState extends ConsumerState<StockValuationReportP
                           ),
                         ),
                       ),
-                      gridData: const FlGridData(show: true, drawVerticalLine: false),
+                      gridData:
+                          const FlGridData(show: true, drawVerticalLine: false),
                       borderData: FlBorderData(show: false),
                       barGroups: _buildBarChartGroups(summary.topItemsByValue),
                     ),
@@ -432,7 +457,8 @@ class _StockValuationReportPageState extends ConsumerState<StockValuationReportP
         const SizedBox(height: 12),
         Card(
           elevation: 1,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           child: SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: DataTable(
@@ -446,17 +472,25 @@ class _StockValuationReportPageState extends ConsumerState<StockValuationReportP
               ],
               rows: summary.topItemsByValue
                   .map((item) => DataRow(cells: [
-                        DataCell(Text(item.itemCode, style: const TextStyle(fontSize: 11))),
-                        DataCell(Text(item.itemName, style: const TextStyle(fontSize: 11))),
-                        DataCell(Text('${item.quantity.toStringAsFixed(2)} ${item.measure}',
+                        DataCell(Text(item.itemCode,
                             style: const TextStyle(fontSize: 11))),
-                        DataCell(Text(_formatCurrency(item.buyRate), style: const TextStyle(fontSize: 11))),
+                        DataCell(Text(item.itemName,
+                            style: const TextStyle(fontSize: 11))),
+                        DataCell(Text(
+                            '${item.quantity.toStringAsFixed(2)} ${item.measure}',
+                            style: const TextStyle(fontSize: 11))),
+                        DataCell(Text(_formatCurrency(item.buyRate),
+                            style: const TextStyle(fontSize: 11))),
                         DataCell(Text(_formatCurrency(item.inventoryValue),
-                            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold))),
-                        DataCell(Text('${item.profitMarginPercent.toStringAsFixed(2)}%',
+                            style: const TextStyle(
+                                fontSize: 11, fontWeight: FontWeight.bold))),
+                        DataCell(Text(
+                            '${item.profitMarginPercent.toStringAsFixed(2)}%',
                             style: TextStyle(
                               fontSize: 11,
-                              color: item.profitMarginPercent > 0 ? Colors.green : Colors.red,
+                              color: item.profitMarginPercent > 0
+                                  ? Colors.green
+                                  : Colors.red,
                               fontWeight: FontWeight.w600,
                             ))),
                       ]))
@@ -471,16 +505,18 @@ class _StockValuationReportPageState extends ConsumerState<StockValuationReportP
   // Helper Methods
   List<ItemEntity> _getFilteredItems(List<ItemEntity> items) {
     return items.where((item) {
-      bool categoryMatch = _selectedCategory == 'All' || item.category == _selectedCategory;
+      bool categoryMatch =
+          _selectedCategory == 'All' || item.category == _selectedCategory;
       // Normalize status comparison (case-insensitive)
-      bool statusMatch = _selectedStatus == 'All' || 
+      bool statusMatch = _selectedStatus == 'All' ||
           item.status.toLowerCase() == _selectedStatus.toLowerCase();
       // Normalize supplier (empty = 'Others')
       var supplier = item.supplier;
       if (supplier.isEmpty || supplier.trim().isEmpty) {
         supplier = 'Others';
       }
-      bool supplierMatch = _selectedSupplier == 'All' || supplier == _selectedSupplier;
+      bool supplierMatch =
+          _selectedSupplier == 'All' || supplier == _selectedSupplier;
       return categoryMatch && statusMatch && supplierMatch;
     }).toList();
   }
@@ -503,7 +539,8 @@ class _StockValuationReportPageState extends ConsumerState<StockValuationReportP
         totalInventoryValue += inventoryValue;
         totalPotentialRevenue += potentialRevenue;
 
-        valueByCategory[item.category] = (valueByCategory[item.category] ?? 0) + inventoryValue;
+        valueByCategory[item.category] =
+            (valueByCategory[item.category] ?? 0) + inventoryValue;
 
         // Normalize supplier (empty = 'Others')
         var supplier = item.supplier;
@@ -531,7 +568,8 @@ class _StockValuationReportPageState extends ConsumerState<StockValuationReportP
     valuationItems.sort((a, b) => b.inventoryValue.compareTo(a.inventoryValue));
     final topItems = valuationItems.take(10).toList();
 
-    int activeItems = items.where((item) => item.status.toLowerCase() == 'active').length;
+    int activeItems =
+        items.where((item) => item.status.toLowerCase() == 'active').length;
     int inactiveItems = items.length - activeItems;
 
     return StockValuationSummary(
@@ -546,7 +584,8 @@ class _StockValuationReportPageState extends ConsumerState<StockValuationReportP
     );
   }
 
-  List<PieChartSectionData> _buildCategoryPieChartSections(StockValuationSummary summary) {
+  List<PieChartSectionData> _buildCategoryPieChartSections(
+      StockValuationSummary summary) {
     final colors = [
       AppTheme.darkGreen,
       AppTheme.limeGreen,
@@ -577,7 +616,8 @@ class _StockValuationReportPageState extends ConsumerState<StockValuationReportP
     }).toList();
   }
 
-  List<BarChartGroupData> _buildBarChartGroups(List<StockValuationItem> topItems) {
+  List<BarChartGroupData> _buildBarChartGroups(
+      List<StockValuationItem> topItems) {
     return topItems.asMap().entries.map((entry) {
       final index = entry.key;
       final item = entry.value;
@@ -596,12 +636,15 @@ class _StockValuationReportPageState extends ConsumerState<StockValuationReportP
 
   double _getMaxBarChartValue(List<StockValuationItem> items) {
     if (items.isEmpty) return 100;
-    final maxValue = items.map((e) => e.inventoryValue).reduce((a, b) => a > b ? a : b);
+    final maxValue =
+        items.map((e) => e.inventoryValue).reduce((a, b) => a > b ? a : b);
     return maxValue * 1.2;
   }
 
   String _formatCurrency(double value) {
-    return NumberFormat.currency(locale: 'en_US', symbol: 'Rp ', decimalDigits: 0).format(value);
+    return NumberFormat.currency(
+            locale: 'en_US', symbol: 'Rp ', decimalDigits: 0)
+        .format(value);
   }
 
   String _formatCurrencyShort(double value) {
@@ -620,14 +663,17 @@ class _StockValuationReportPageState extends ConsumerState<StockValuationReportP
   }
 
   List<String> _getUniqueSuppliers(List<ItemEntity> items) {
-    final suppliers = items.map((e) {
-      var supplier = e.supplier;
-      // Treat empty suppliers as 'Others'
-      if (supplier.isEmpty || supplier.trim().isEmpty) {
-        supplier = 'Others';
-      }
-      return supplier;
-    }).toSet().toList();
+    final suppliers = items
+        .map((e) {
+          var supplier = e.supplier;
+          // Treat empty suppliers as 'Others'
+          if (supplier.isEmpty || supplier.trim().isEmpty) {
+            supplier = 'Others';
+          }
+          return supplier;
+        })
+        .toSet()
+        .toList();
     suppliers.sort();
     return suppliers;
   }
@@ -680,4 +726,3 @@ class _StockValuationReportPageState extends ConsumerState<StockValuationReportP
     }).toList();
   }
 }
-

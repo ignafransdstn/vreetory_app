@@ -1,19 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import '../../../../core/theme/app_theme.dart';
-import '../providers/auth_provider.dart';
-import 'login_page.dart';
-import '../../../inventory/domain/entities/item_entity.dart';
-import '../../../inventory/presentation/provider/item_provider.dart';
-import '../../../inventory/presentation/providers/low_stock_provider.dart';
-import '../../../inventory/domain/entities/low_stock_alert_item.dart';
-import 'expired_items_list_page.dart';
-import 'stock_headline_detail_page.dart';
-import 'low_stock_alert_detail_page.dart';
+import 'package:vreetory_app/core/theme/app_theme.dart';
+import 'package:vreetory_app/features/authentication/presentation/providers/auth_provider.dart';
+import 'package:vreetory_app/features/authentication/presentation/pages/login_page.dart';
+import 'package:vreetory_app/features/inventory/domain/entities/item_entity.dart';
+import 'package:vreetory_app/features/inventory/presentation/provider/item_provider.dart';
+import 'package:vreetory_app/features/inventory/presentation/providers/low_stock_provider.dart';
+import 'package:vreetory_app/features/inventory/domain/entities/low_stock_alert_item.dart';
+import 'package:vreetory_app/features/authentication/presentation/pages/expired_items_list_page.dart';
+import 'package:vreetory_app/features/authentication/presentation/pages/stock_headline_detail_page.dart';
+import 'package:vreetory_app/features/authentication/presentation/pages/low_stock_alert_detail_page.dart';
+import 'package:vreetory_app/features/pos/presentation/providers/transaction_history_provider.dart';
+import 'package:vreetory_app/features/authentication/presentation/pages/today_sales_list_page.dart';
 
-import 'admin_menu_page.dart';
-import 'admin_profile_page.dart';
+import 'package:vreetory_app/features/authentication/presentation/pages/admin_menu_page.dart';
+import 'package:vreetory_app/features/authentication/presentation/pages/admin_profile_page.dart';
+import 'package:vreetory_app/features/pos/presentation/pages/cashier_page.dart';
 
 class AdminHomePage extends ConsumerStatefulWidget {
   const AdminHomePage({super.key});
@@ -24,6 +27,15 @@ class AdminHomePage extends ConsumerStatefulWidget {
 
 class _AdminHomePageState extends ConsumerState<AdminHomePage> {
   int _selectedIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    // Fetch items when page loads
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(itemProvider.notifier).fetchAllItems();
+    });
+  }
 
   void _onNavTap(int index) {
     setState(() {
@@ -66,13 +78,6 @@ class _AdminHomePageState extends ConsumerState<AdminHomePage> {
             builder: (context, ref, _) {
               final itemState = ref.watch(itemProvider);
 
-              // Fetch items on first load
-              ref.listen(itemProvider, (previous, next) {
-                if (previous == null) {
-                  ref.read(itemProvider.notifier).fetchAllItems();
-                }
-              });
-
               if (itemState.isLoading) {
                 return const Center(child: CircularProgressIndicator());
               }
@@ -84,6 +89,8 @@ class _AdminHomePageState extends ConsumerState<AdminHomePage> {
                   _SevenDaysExpiredSection(items: itemState.items),
                   const SizedBox(height: 16),
                   _TodayExpiredSection(items: itemState.items),
+                  const SizedBox(height: 16),
+                  const _TodaySalesSection(),
                   const SizedBox(height: 16),
                   const _LowStockNotificationSection(),
                   const SizedBox(height: 16),
@@ -108,6 +115,9 @@ class _AdminHomePageState extends ConsumerState<AdminHomePage> {
         bodyContent = const AdminMenuPage();
         break;
       case 2:
+        bodyContent = const CashierPage();
+        break;
+      case 3:
         bodyContent = const AdminProfilePage();
         break;
       default:
@@ -118,7 +128,13 @@ class _AdminHomePageState extends ConsumerState<AdminHomePage> {
       backgroundColor: AppTheme.ivoryWhite,
       appBar: AppBar(
         title: Text(
-          _selectedIndex == 0 ? 'Home' : _selectedIndex == 1 ? 'Menu' : 'Profile',
+          _selectedIndex == 0
+              ? 'Home'
+              : _selectedIndex == 1
+                  ? 'Menu'
+                  : _selectedIndex == 2
+                      ? 'Kasir'
+                      : 'Profile',
           style: const TextStyle(
             fontWeight: FontWeight.bold,
             color: Colors.white,
@@ -159,6 +175,10 @@ class _AdminHomePageState extends ConsumerState<AdminHomePage> {
           BottomNavigationBarItem(
             icon: Icon(Icons.menu),
             label: 'MENU',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.point_of_sale),
+            label: 'KASIR',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.person),
@@ -713,6 +733,164 @@ class _LowStockNotificationSection extends ConsumerWidget {
                 'Error loading',
                 style: TextStyle(fontSize: 12, color: Colors.white70),
               ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// Today Sales Section Widget
+class _TodaySalesSection extends ConsumerStatefulWidget {
+  const _TodaySalesSection();
+
+  @override
+  ConsumerState<_TodaySalesSection> createState() => _TodaySalesSectionState();
+}
+
+class _TodaySalesSectionState extends ConsumerState<_TodaySalesSection> {
+  @override
+  void initState() {
+    super.initState();
+    Future.microtask(() {
+      ref.read(transactionHistoryProvider.notifier).fetchAllTransactions();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final transactionState = ref.watch(transactionHistoryProvider);
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+
+    // Filter today's transactions
+    final todayTransactions = transactionState.transactions.where((tx) {
+      final txDate = tx.transactionDate;
+      final txDay = DateTime(txDate.year, txDate.month, txDate.day);
+      return txDay.isAtSameMomentAs(today);
+    }).toList();
+
+    // Calculate total sales amount
+    int totalSales = 0;
+    for (final tx in todayTransactions) {
+      totalSales += int.tryParse(tx.totalAmount) ?? 0;
+    }
+
+    final currencyFormat = NumberFormat.currency(
+      locale: 'id_ID',
+      symbol: 'Rp ',
+      decimalDigits: 0,
+    );
+
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const TodaySalesListPage(),
+          ),
+        );
+      },
+      child: Card(
+        color: Colors.purple.shade400,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        elevation: 2,
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.shopping_cart,
+                      color: Colors.white, size: 20),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Today Sales (${todayTransactions.length})',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              // Total Sales Amount
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Total Sales:',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.white70,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    Text(
+                      currencyFormat.format(totalSales),
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 8),
+              if (todayTransactions.isEmpty)
+                const Padding(
+                  padding: EdgeInsets.all(8.0),
+                  child: Text(
+                    'No sales today',
+                    style: TextStyle(fontSize: 12, color: Colors.white70),
+                  ),
+                )
+              else
+                ...todayTransactions.take(3).map((tx) => Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 6),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              'Trx #${tx.transactionNumber.substring(tx.transactionNumber.length - 8)}',
+                              style: const TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                  color: Colors.white),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          Text(
+                            currencyFormat
+                                .format(int.tryParse(tx.totalAmount) ?? 0),
+                            style: const TextStyle(
+                                fontSize: 11, color: Colors.white70),
+                          ),
+                        ],
+                      ),
+                    )),
+              if (todayTransactions.length > 3)
+                Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: Text(
+                    '+${todayTransactions.length - 3} more',
+                    style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white70),
+                  ),
+                ),
             ],
           ),
         ),

@@ -20,7 +20,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
   @override
   void initState() {
     super.initState();
-    
+
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 2500),
       vsync: this,
@@ -97,9 +97,9 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
               // App Name - Animated
               FadeTransition(
                 opacity: _fadeAnimation,
-                child: Column(
+                child: const Column(
                   children: [
-                    const Text(
+                    Text(
                       'Inventory App',
                       style: TextStyle(
                         color: Colors.white70,
@@ -108,8 +108,8 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                         letterSpacing: 1.2,
                       ),
                     ),
-                    const SizedBox(height: 4),
-                    const Text(
+                    SizedBox(height: 4),
+                    Text(
                       'VreeTory',
                       style: TextStyle(
                         color: Colors.white,
@@ -132,7 +132,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                       height: 40,
                       child: CircularProgressIndicator(
                         valueColor: AlwaysStoppedAnimation<Color>(
-                          Colors.white.withOpacity(0.7),
+                          Colors.white.withValues(alpha: 0.7),
                         ),
                         strokeWidth: 2,
                       ),

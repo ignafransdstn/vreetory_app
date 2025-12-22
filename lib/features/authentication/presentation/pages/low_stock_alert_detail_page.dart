@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/utils/quantity_formatter.dart';
 import '../../../inventory/domain/entities/low_stock_alert_item.dart';
 import '../../../inventory/presentation/providers/low_stock_provider.dart';
 
@@ -258,7 +259,7 @@ class LowStockAlertDetailPage extends ConsumerWidget {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          '${item.currentQuantity} units',
+                          '${QuantityFormatter.format(item.currentQuantity.toString())} ${item.measure.toLowerCase()}',
                           style: const TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
@@ -279,7 +280,7 @@ class LowStockAlertDetailPage extends ConsumerWidget {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          '${item.minimumStock} units',
+                          '${QuantityFormatter.format(item.minimumStock.toString())} ${item.measure.toLowerCase()}',
                           style: const TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,

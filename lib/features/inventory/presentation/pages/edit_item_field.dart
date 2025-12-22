@@ -1,9 +1,12 @@
 // ignore_for_file: use_build_context_synchronously
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/animated_button.dart';
+import '../../../../core/services/image_upload_service.dart';
 import '../../domain/entities/item_entity.dart';
 import '../provider/item_provider.dart';
 import '../../../authentication/presentation/providers/auth_provider.dart';
@@ -26,6 +29,11 @@ class _EditItemFieldPageState extends ConsumerState<EditItemFieldPage> {
   late final TextEditingController _expiredDateController;
   late final TextEditingController _supplierController;
   late final TextEditingController _descriptionController;
+
+  final ImageUploadService _imageUploadService = ImageUploadService();
+  XFile? _selectedImage;
+  bool _isUploadingImage = false;
+  String _currentImageUrl = '';
 
   String? _selectedCategory;
   String? _selectedMeasure;
@@ -55,6 +63,7 @@ class _EditItemFieldPageState extends ConsumerState<EditItemFieldPage> {
     _selectedCategory = item.category;
     _selectedMeasure = item.measure;
     _status = item.status == 'active';
+    _currentImageUrl = item.imageUrl;
   }
 
   @override
@@ -83,12 +92,18 @@ class _EditItemFieldPageState extends ConsumerState<EditItemFieldPage> {
       _measureError = _selectedMeasure == null || _selectedMeasure!.isEmpty;
     });
 
-    if (_itemNameError || _categoryError || _buyRateError || _sellRateError || _expiredDateError || _measureError) {
+    if (_itemNameError ||
+        _categoryError ||
+        _buyRateError ||
+        _sellRateError ||
+        _expiredDateError ||
+        _measureError) {
       await showDialog(
         context: context,
         builder: (context) => AlertDialog(
           title: const Text('Kolom Mandatory Belum Terisi'),
-          content: const Text('Kolom mandatory masih belum terisi, silahkan isi data yang di butuhkan pada kolom'),
+          content: const Text(
+              'Kolom mandatory masih belum terisi, silahkan isi data yang di butuhkan pada kolom'),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
@@ -121,15 +136,19 @@ class _EditItemFieldPageState extends ConsumerState<EditItemFieldPage> {
 
     final now = DateTime.now();
     final authState = ref.read(authProvider);
-    
+
     // Check if user is trying to update quantity on inactive item (only admin can do this)
-    final quantityChanged = _quantityController.text.trim() != widget.item.quantity;
-    if (authState.user?.role == 'user' && widget.item.status == 'inactive' && quantityChanged) {
+    final quantityChanged =
+        _quantityController.text.trim() != widget.item.quantity;
+    if (authState.user?.role == 'user' &&
+        widget.item.status == 'inactive' &&
+        quantityChanged) {
       await showDialog(
         context: context,
         builder: (context) => AlertDialog(
           title: const Text('Akses Ditolak'),
-          content: const Text('User tidak memiliki izin untuk mengubah quantity item yang inactive. Hanya admin yang dapat mengubah quantity item inactive.'),
+          content: const Text(
+              'User tidak memiliki izin untuk mengubah quantity item yang inactive. Hanya admin yang dapat mengubah quantity item inactive.'),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
@@ -140,14 +159,16 @@ class _EditItemFieldPageState extends ConsumerState<EditItemFieldPage> {
       );
       return;
     }
-    
+
     // Check if user is trying to change status (only admin can change status)
-    if (authState.user?.role == 'user' && _status != (widget.item.status == 'active')) {
+    if (authState.user?.role == 'user' &&
+        _status != (widget.item.status == 'active')) {
       await showDialog(
         context: context,
         builder: (context) => AlertDialog(
           title: const Text('Akses Ditolak'),
-          content: const Text('User tidak memiliki izin untuk mengubah status item. Hanya admin yang dapat mengubah status.'),
+          content: const Text(
+              'User tidak memiliki izin untuk mengubah status item. Hanya admin yang dapat mengubah status.'),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
@@ -158,24 +179,57 @@ class _EditItemFieldPageState extends ConsumerState<EditItemFieldPage> {
       );
       return;
     }
-    
+
     final updatedBy = authState.user?.email ?? widget.item.updatedBy;
-    
+
+    // Handle image upload if new image is selected
+    String imageUrl = _currentImageUrl;
+    if (_selectedImage != null) {
+      try {
+        setState(() => _isUploadingImage = true);
+        final File imageFile = File(_selectedImage!.path);
+
+        // Delete old image if exists
+        if (_currentImageUrl.isNotEmpty) {
+          await _imageUploadService.deleteImage(_currentImageUrl);
+        }
+
+        // Upload new image
+        imageUrl = await _imageUploadService.uploadImage(
+            imageFile, _itemCodeController.text.trim());
+        setState(() => _isUploadingImage = false);
+      } catch (e) {
+        setState(() => _isUploadingImage = false);
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error uploading image: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+        return;
+      }
+    }
+
     final updatedItem = ItemEntity(
       uid: widget.item.uid,
       itemName: _itemNameController.text.trim(),
       itemCode: _itemCodeController.text.trim(),
       category: _selectedCategory ?? '',
       quantity: _quantityController.text.trim(),
-      previousQuantity: quantityChanged ? widget.item.quantity : widget.item.previousQuantity,
-      minimumStock: _minimumStockController.text.trim().isEmpty ? '0' : _minimumStockController.text.trim(),
+      previousQuantity:
+          quantityChanged ? widget.item.quantity : widget.item.previousQuantity,
+      minimumStock: _minimumStockController.text.trim().isEmpty
+          ? '0'
+          : _minimumStockController.text.trim(),
       buyRate: _buyRateController.text.trim(),
       sellRate: _sellRateController.text.trim(),
       expiredDate: _expiredDateController.text.trim(),
       measure: _selectedMeasure ?? '',
       supplier: _supplierController.text.trim(),
       description: _descriptionController.text.trim(),
-      imageUrl: widget.item.imageUrl,
+      imageUrl: imageUrl,
       status: _status ? 'active' : 'inactive',
       createdBy: widget.item.createdBy,
       updatedBy: updatedBy,
@@ -207,7 +261,8 @@ class _EditItemFieldPageState extends ConsumerState<EditItemFieldPage> {
     final authState = ref.watch(authProvider);
     final userRole = authState.user?.role;
     final isItemInactive = widget.item.status == 'inactive';
-    final canUserEdit = userRole == 'admin' || (userRole == 'user' && !isItemInactive);
+    final canUserEdit =
+        userRole == 'admin' || (userRole == 'user' && !isItemInactive);
 
     return Scaffold(
       backgroundColor: AppTheme.ivoryWhite,
@@ -241,142 +296,157 @@ class _EditItemFieldPageState extends ConsumerState<EditItemFieldPage> {
               child: canUserEdit
                   ? Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  _label('ITEM NAME', error: _itemNameError),
-                  TextFormField(
-                    controller: _itemNameController,
-                    decoration: _inputDecoration('Enter input here'),
-                  ),
-                  _helper('Fill the item name'),
-                  const SizedBox(height: 16),
-                  _label('ITEM CODE'),
-                  TextFormField(
-                    controller: _itemCodeController,
-                    decoration: _inputDecoration('Enter input here'),
-                  ),
-                  _helper('Fill item code (*optional)'),
-                  const SizedBox(height: 16),
-                  _label('CATEGORY', error: _categoryError),
-                  DropdownButtonFormField<String>(
-                    value: _selectedCategory,
-                    decoration: _inputDecoration('Select input here'),
-                    items: const [
-                      DropdownMenuItem(value: 'Food', child: Text('Food')),
-                      DropdownMenuItem(value: 'Fruit', child: Text('Fruit')),
-                      DropdownMenuItem(value: 'Drink', child: Text('Drink')),
-                      DropdownMenuItem(value: 'Vegetable', child: Text('Vegetable')),
-                      DropdownMenuItem(value: 'Parcel', child: Text('Parcel')),
-                      // Tambahkan opsi lain sesuai kebutuhan
-                    ],
-                    onChanged: (v) => setState(() => _selectedCategory = v),
-                  ),
-                  _helper('Select category'),
-                  const SizedBox(height: 16),
-                  _label('QUANTITY'),
-                  TextFormField(
-                    controller: _quantityController,
-                    decoration: _inputDecoration('Enter input here'),
-                    keyboardType: TextInputType.number,
-                    enabled: canUserEdit,
-                    onChanged: canUserEdit ? null : (_) {},
-                  ),
-                  _helper('Fill quantity (*optional)'),
-                  const SizedBox(height: 16),
-                  _label('MINIMUM STOCK'),
-                  TextFormField(
-                    controller: _minimumStockController,
-                    decoration: _inputDecoration('Enter input here'),
-                    keyboardType: TextInputType.number,
-                  ),
-                  _helper('Fill minimum stock threshold (*optional)'),
-                  const SizedBox(height: 16),
-                  _label('BUY RATE', error: _buyRateError),
-                  TextFormField(
-                    controller: _buyRateController,
-                    decoration: _inputDecoration('Enter input here'),
-                    keyboardType: TextInputType.number,
-                  ),
-                  _helper('Fill buy price'),
-                  const SizedBox(height: 16),
-                  _label('SALE RATE', error: _sellRateError),
-                  TextFormField(
-                    controller: _sellRateController,
-                    decoration: _inputDecoration('Enter input here'),
-                    keyboardType: TextInputType.number,
-                  ),
-                  _helper('Fill sell price'),
-                  const SizedBox(height: 16),
-                  _label('EXPIRED DATE', error: _expiredDateError),
-                  TextFormField(
-                    controller: _expiredDateController,
-                    decoration: _inputDecoration('DD/MM/YYYY'),
-                    readOnly: true,
-                    onTap: () async {
-                      // Parse current date or use today if invalid
-                      DateTime initialDate = DateTime.now();
-                      try {
-                        initialDate = DateFormat('dd/MM/yyyy').parse(_expiredDateController.text.trim());
-                      } catch (e) {
-                        initialDate = DateTime.now();
-                      }
-                      
-                      final picked = await showDatePicker(
-                        context: context,
-                        initialDate: initialDate,
-                        firstDate: DateTime(2020),
-                        lastDate: DateTime(2100),
-                      );
-                      if (picked != null) {
-                        _expiredDateController.text = DateFormat('dd/MM/yyyy').format(picked);
-                      }
-                    },
-                  ),
-                  _helper('Select date of item expired'),
-                  const SizedBox(height: 16),
-                  _label('MEASURE', error: _measureError),
-                  DropdownButtonFormField<String>(
-                    value: _selectedMeasure,
-                    decoration: _inputDecoration('Enter input here'),
-                    items: const [
-                      DropdownMenuItem(value: 'PCS', child: Text('PCS')),
-                      DropdownMenuItem(value: 'KG', child: Text('KG')),
-                      DropdownMenuItem(value: 'ML', child: Text('ML')),
-                      DropdownMenuItem(value: 'LITER', child: Text('LITER')),
-                      DropdownMenuItem(value: 'BOX', child: Text('BOX')),
-                      // Tambahkan opsi lain sesuai kebutuhan
-                    ],
-                    onChanged: (v) => setState(() => _selectedMeasure = v),
-                  ),
-                  _helper('Select measure'),
-                  const SizedBox(height: 16),
-                  _label('SUPPLIER'),
-                  TextFormField(
-                    controller: _supplierController,
-                    decoration: _inputDecoration('Enter input here'),
-                  ),
-                  _helper('Fill supplier name (*optional)'),
-                  const SizedBox(height: 16),
-                  _label('ITEM DESCRIPTION'),
-                  TextFormField(
-                    controller: _descriptionController,
-                    decoration: _inputDecoration('Enter input here'),
-                    maxLines: 3,
-                  ),
-                  _helper('Fill item description (*optional)'),
-                  const SizedBox(height: 16),
-                  _buildStatusSection(),
-                  const SizedBox(height: 24),
-                  SizedBox(
-                    width: double.infinity,
-                    child: AnimatedOutlinedButton(
-                      label: 'UPDATE DATA',
-                      borderColor: AppTheme.brightYellow,
-                      textColor: AppTheme.brightYellow,
-                      onPressed: handleUpdate,
-                    ),
-                  ),
-                ]
-                  )
+                      children: [
+                          _label('ITEM NAME', error: _itemNameError),
+                          TextFormField(
+                            controller: _itemNameController,
+                            decoration: _inputDecoration('Enter input here'),
+                          ),
+                          _helper('Fill the item name'),
+                          const SizedBox(height: 16),
+                          _label('ITEM CODE'),
+                          TextFormField(
+                            controller: _itemCodeController,
+                            decoration: _inputDecoration('Enter input here'),
+                          ),
+                          _helper('Fill item code (*optional)'),
+                          const SizedBox(height: 16),
+                          _label('CATEGORY', error: _categoryError),
+                          DropdownButtonFormField<String>(
+                            initialValue: _selectedCategory,
+                            decoration: _inputDecoration('Select input here'),
+                            items: const [
+                              DropdownMenuItem(
+                                  value: 'Food', child: Text('Food')),
+                              DropdownMenuItem(
+                                  value: 'Fruit', child: Text('Fruit')),
+                              DropdownMenuItem(
+                                  value: 'Drink', child: Text('Drink')),
+                              DropdownMenuItem(
+                                  value: 'Vegetable', child: Text('Vegetable')),
+                              DropdownMenuItem(
+                                  value: 'Parcel', child: Text('Parcel')),
+                              // Tambahkan opsi lain sesuai kebutuhan
+                            ],
+                            onChanged: (v) =>
+                                setState(() => _selectedCategory = v),
+                          ),
+                          _helper('Select category'),
+                          const SizedBox(height: 16),
+                          _label('QUANTITY'),
+                          TextFormField(
+                            controller: _quantityController,
+                            decoration: _inputDecoration('Enter input here'),
+                            keyboardType: TextInputType.number,
+                            enabled: canUserEdit,
+                            onChanged: canUserEdit ? null : (_) {},
+                          ),
+                          _helper('Fill quantity (*optional)'),
+                          const SizedBox(height: 16),
+                          _label('MINIMUM STOCK'),
+                          TextFormField(
+                            controller: _minimumStockController,
+                            decoration: _inputDecoration('Enter input here'),
+                            keyboardType: TextInputType.number,
+                          ),
+                          _helper('Fill minimum stock threshold (*optional)'),
+                          const SizedBox(height: 16),
+                          _label('BUY RATE', error: _buyRateError),
+                          TextFormField(
+                            controller: _buyRateController,
+                            decoration: _inputDecoration('Enter input here'),
+                            keyboardType: TextInputType.number,
+                          ),
+                          _helper('Fill buy price'),
+                          const SizedBox(height: 16),
+                          _label('SALE RATE', error: _sellRateError),
+                          TextFormField(
+                            controller: _sellRateController,
+                            decoration: _inputDecoration('Enter input here'),
+                            keyboardType: TextInputType.number,
+                          ),
+                          _helper('Fill sell price'),
+                          const SizedBox(height: 16),
+                          _label('EXPIRED DATE', error: _expiredDateError),
+                          TextFormField(
+                            controller: _expiredDateController,
+                            decoration: _inputDecoration('DD/MM/YYYY'),
+                            readOnly: true,
+                            onTap: () async {
+                              // Parse current date or use today if invalid
+                              DateTime initialDate = DateTime.now();
+                              try {
+                                initialDate = DateFormat('dd/MM/yyyy')
+                                    .parse(_expiredDateController.text.trim());
+                              } catch (e) {
+                                initialDate = DateTime.now();
+                              }
+
+                              final picked = await showDatePicker(
+                                context: context,
+                                initialDate: initialDate,
+                                firstDate: DateTime(2020),
+                                lastDate: DateTime(2100),
+                              );
+                              if (picked != null) {
+                                _expiredDateController.text =
+                                    DateFormat('dd/MM/yyyy').format(picked);
+                              }
+                            },
+                          ),
+                          _helper('Select date of item expired'),
+                          const SizedBox(height: 16),
+                          _label('MEASURE', error: _measureError),
+                          DropdownButtonFormField<String>(
+                            initialValue: _selectedMeasure,
+                            decoration: _inputDecoration('Enter input here'),
+                            items: const [
+                              DropdownMenuItem(
+                                  value: 'PCS', child: Text('PCS')),
+                              DropdownMenuItem(value: 'KG', child: Text('KG')),
+                              DropdownMenuItem(value: 'ML', child: Text('ML')),
+                              DropdownMenuItem(
+                                  value: 'LITER', child: Text('LITER')),
+                              DropdownMenuItem(
+                                  value: 'BOX', child: Text('BOX')),
+                              // Tambahkan opsi lain sesuai kebutuhan
+                            ],
+                            onChanged: (v) =>
+                                setState(() => _selectedMeasure = v),
+                          ),
+                          _helper('Select measure'),
+                          const SizedBox(height: 16),
+                          _label('SUPPLIER'),
+                          TextFormField(
+                            controller: _supplierController,
+                            decoration: _inputDecoration('Enter input here'),
+                          ),
+                          _helper('Fill supplier name (*optional)'),
+                          const SizedBox(height: 16),
+                          _label('PRODUCT IMAGE'),
+                          _buildImageUploadSection(),
+                          _helper('Upload product image (*optional)'),
+                          const SizedBox(height: 16),
+                          _label('ITEM DESCRIPTION'),
+                          TextFormField(
+                            controller: _descriptionController,
+                            decoration: _inputDecoration('Enter input here'),
+                            maxLines: 3,
+                          ),
+                          _helper('Fill item description (*optional)'),
+                          const SizedBox(height: 16),
+                          _buildStatusSection(),
+                          const SizedBox(height: 24),
+                          SizedBox(
+                            width: double.infinity,
+                            child: AnimatedOutlinedButton(
+                              label: 'UPDATE DATA',
+                              borderColor: AppTheme.brightYellow,
+                              textColor: AppTheme.brightYellow,
+                              onPressed: handleUpdate,
+                            ),
+                          ),
+                        ])
                   : Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       crossAxisAlignment: CrossAxisAlignment.center,
@@ -460,7 +530,9 @@ class _EditItemFieldPageState extends ConsumerState<EditItemFieldPage> {
           CheckboxListTile(
             value: _status,
             onChanged: (v) => setState(() => _status = v ?? true),
-            title: const Text('Check for active status item or uncheck for inactive status item', style: TextStyle(color: Colors.white)),
+            title: const Text(
+                'Check for active status item or uncheck for inactive status item',
+                style: TextStyle(color: Colors.white)),
             controlAffinity: ListTileControlAffinity.leading,
             contentPadding: EdgeInsets.zero,
           )
@@ -490,7 +562,9 @@ class _EditItemFieldPageState extends ConsumerState<EditItemFieldPage> {
               ],
             ),
           ),
-        _helper(isAdmin ? 'Check for active status item or uncheck for inactive status item' : 'Status item (User tidak dapat mengubah status)'),
+        _helper(isAdmin
+            ? 'Check for active status item or uncheck for inactive status item'
+            : 'Status item (User tidak dapat mengubah status)'),
       ],
     );
   }
@@ -503,6 +577,114 @@ class _EditItemFieldPageState extends ConsumerState<EditItemFieldPage> {
           borderRadius: BorderRadius.circular(6),
           borderSide: BorderSide.none,
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       );
+
+  Widget _buildImageUploadSection() {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Column(
+        children: [
+          // Show current image or new selected image
+          if (_selectedImage != null || _currentImageUrl.isNotEmpty)
+            Column(
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: _selectedImage != null
+                      ? Image.file(
+                          File(_selectedImage!.path),
+                          height: 200,
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                        )
+                      : Image.network(
+                          _currentImageUrl,
+                          height: 200,
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            return Container(
+                              height: 200,
+                              color: Colors.grey[300],
+                              child: const Icon(
+                                Icons.broken_image,
+                                size: 50,
+                                color: Colors.grey,
+                              ),
+                            );
+                          },
+                        ),
+                ),
+                const SizedBox(height: 8),
+                TextButton.icon(
+                  onPressed: () {
+                    setState(() {
+                      _selectedImage = null;
+                      _currentImageUrl = '';
+                    });
+                  },
+                  icon: const Icon(Icons.delete, color: Colors.red),
+                  label: const Text(
+                    'Remove Image',
+                    style: TextStyle(color: Colors.red),
+                  ),
+                ),
+                const SizedBox(height: 8),
+              ],
+            ),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: _isUploadingImage
+                      ? null
+                      : () async {
+                          final image =
+                              await _imageUploadService.pickImageFromCamera();
+                          if (image != null) {
+                            setState(() {
+                              _selectedImage = image;
+                            });
+                          }
+                        },
+                  icon: const Icon(Icons.camera_alt),
+                  label: const Text('Camera'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppTheme.darkGreen,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: _isUploadingImage
+                      ? null
+                      : () async {
+                          final image =
+                              await _imageUploadService.pickImageFromGallery();
+                          if (image != null) {
+                            setState(() {
+                              _selectedImage = image;
+                            });
+                          }
+                        },
+                  icon: const Icon(Icons.photo_library),
+                  label: const Text('Gallery'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppTheme.darkGreen,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
 }

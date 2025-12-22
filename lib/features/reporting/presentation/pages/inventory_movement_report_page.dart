@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/utils/quantity_formatter.dart';
 import '../../../inventory/presentation/provider/inventory_movement_provider.dart';
 
 class InventoryMovementReportPage extends ConsumerStatefulWidget {
@@ -54,16 +55,21 @@ class _InventoryMovementReportPageState
 
   Widget _buildReportContent(List<InventoryMovementItem> movements) {
     final filteredMovements = _getFilteredMovements(movements);
-    final inboundCount = movements.where((m) => m.movementType == 'inbound').length;
-    final outboundCount = movements.where((m) => m.movementType == 'outbound').length;
-    final newItemCount = movements.where((m) => m.movementType == 'new_item').length;
+    final inboundCount =
+        movements.where((m) => m.movementType == 'inbound').length;
+    final outboundCount =
+        movements.where((m) => m.movementType == 'outbound').length;
+    final saleCount = movements.where((m) => m.movementType == 'sale').length;
+    final newItemCount =
+        movements.where((m) => m.movementType == 'new_item').length;
 
     return SingleChildScrollView(
       child: Column(
         children: [
           _buildFilterSection(),
           const SizedBox(height: 16),
-          _buildSummaryCards(inboundCount, outboundCount, newItemCount),
+          _buildSummaryCards(
+              inboundCount, outboundCount, saleCount, newItemCount),
           const SizedBox(height: 24),
           _buildChartsSection(movements),
           const SizedBox(height: 24),
@@ -76,17 +82,17 @@ class _InventoryMovementReportPageState
 
   Widget _buildFilterSection() {
     final movementState = ref.watch(inventoryMovementProvider);
-    
+
     // Get unique suppliers from movements, treat empty as 'Others'
     final suppliers = <String>{'All'};
     for (final movement in movementState.movements) {
-      final supplier = movement.item.supplier.trim().isEmpty 
-          ? 'Others' 
+      final supplier = movement.item.supplier.trim().isEmpty
+          ? 'Others'
           : movement.item.supplier.trim();
       suppliers.add(supplier);
     }
     final supplierList = suppliers.toList()..sort();
-    
+
     return Card(
       elevation: 1,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -108,14 +114,17 @@ class _InventoryMovementReportPageState
               children: [
                 Expanded(
                   child: DropdownButtonFormField<String>(
-                    value: _selectedMovementType,
-                    items: ['All', 'Inbound', 'Outbound', 'New Item']
-                        .map((type) => DropdownMenuItem(value: type, child: Text(type)))
+                    initialValue: _selectedMovementType,
+                    items: ['All', 'Inbound', 'Outbound', 'Sale', 'New Item']
+                        .map((type) =>
+                            DropdownMenuItem(value: type, child: Text(type)))
                         .toList(),
-                    onChanged: (value) => setState(() => _selectedMovementType = value ?? 'All'),
+                    onChanged: (value) =>
+                        setState(() => _selectedMovementType = value ?? 'All'),
                     decoration: InputDecoration(
                       labelText: 'Movement Type',
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8)),
                       isDense: true,
                     ),
                   ),
@@ -123,14 +132,24 @@ class _InventoryMovementReportPageState
                 const SizedBox(width: 12),
                 Expanded(
                   child: DropdownButtonFormField<String>(
-                    value: _selectedCategory,
-                    items: ['All', 'Food', 'Fruit', 'Drink', 'Vegetable', 'Parcel']
-                        .map((cat) => DropdownMenuItem(value: cat, child: Text(cat)))
+                    initialValue: _selectedCategory,
+                    items: [
+                      'All',
+                      'Food',
+                      'Fruit',
+                      'Drink',
+                      'Vegetable',
+                      'Parcel'
+                    ]
+                        .map((cat) =>
+                            DropdownMenuItem(value: cat, child: Text(cat)))
                         .toList(),
-                    onChanged: (value) => setState(() => _selectedCategory = value ?? 'All'),
+                    onChanged: (value) =>
+                        setState(() => _selectedCategory = value ?? 'All'),
                     decoration: InputDecoration(
                       labelText: 'Category',
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8)),
                       isDense: true,
                     ),
                   ),
@@ -139,14 +158,16 @@ class _InventoryMovementReportPageState
             ),
             const SizedBox(height: 12),
             DropdownButtonFormField<String>(
-              value: _selectedSupplier,
+              initialValue: _selectedSupplier,
               items: supplierList
                   .map((sup) => DropdownMenuItem(value: sup, child: Text(sup)))
                   .toList(),
-              onChanged: (value) => setState(() => _selectedSupplier = value ?? 'All'),
+              onChanged: (value) =>
+                  setState(() => _selectedSupplier = value ?? 'All'),
               decoration: InputDecoration(
                 labelText: 'Supplier',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                border:
+                    OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
                 isDense: true,
               ),
             ),
@@ -156,7 +177,8 @@ class _InventoryMovementReportPageState
     );
   }
 
-  Widget _buildSummaryCards(int inboundCount, int outboundCount, int newItemCount) {
+  Widget _buildSummaryCards(
+      int inboundCount, int outboundCount, int saleCount, int newItemCount) {
     return Card(
       elevation: 1,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -179,6 +201,15 @@ class _InventoryMovementReportPageState
                 outboundCount.toString(),
                 Icons.arrow_upward,
                 Colors.red,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: _buildSummaryCard(
+                'Sale',
+                saleCount.toString(),
+                Icons.shopping_cart,
+                Colors.purple,
               ),
             ),
             const SizedBox(width: 8),
@@ -237,20 +268,30 @@ class _InventoryMovementReportPageState
   }
 
   Widget _buildChartsSection(List<InventoryMovementItem> movements) {
-    final inboundCount = movements.where((m) => m.movementType == 'inbound').length;
-    final outboundCount = movements.where((m) => m.movementType == 'outbound').length;
-    final newItemCount = movements.where((m) => m.movementType == 'new_item').length;
-    
-    final categoryMovements = <String, (int, int, int)>{};
+    final inboundCount =
+        movements.where((m) => m.movementType == 'inbound').length;
+    final outboundCount =
+        movements.where((m) => m.movementType == 'outbound').length;
+    final saleCount = movements.where((m) => m.movementType == 'sale').length;
+    final newItemCount =
+        movements.where((m) => m.movementType == 'new_item').length;
+
+    final categoryMovements = <String, (int, int, int, int)>{};
     for (final movement in movements) {
       final category = movement.item.category;
-      final existing = categoryMovements[category] ?? (0, 0, 0);
+      final existing = categoryMovements[category] ?? (0, 0, 0, 0);
       if (movement.movementType == 'inbound') {
-        categoryMovements[category] = (existing.$1 + 1, existing.$2, existing.$3);
+        categoryMovements[category] =
+            (existing.$1 + 1, existing.$2, existing.$3, existing.$4);
       } else if (movement.movementType == 'outbound') {
-        categoryMovements[category] = (existing.$1, existing.$2 + 1, existing.$3);
+        categoryMovements[category] =
+            (existing.$1, existing.$2 + 1, existing.$3, existing.$4);
+      } else if (movement.movementType == 'sale') {
+        categoryMovements[category] =
+            (existing.$1, existing.$2, existing.$3 + 1, existing.$4);
       } else if (movement.movementType == 'new_item') {
-        categoryMovements[category] = (existing.$1, existing.$2, existing.$3 + 1);
+        categoryMovements[category] =
+            (existing.$1, existing.$2, existing.$3, existing.$4 + 1);
       }
     }
 
@@ -259,7 +300,8 @@ class _InventoryMovementReportPageState
       children: [
         Card(
           elevation: 1,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
@@ -267,7 +309,10 @@ class _InventoryMovementReportPageState
               children: [
                 Text(
                   'Movement Distribution',
-                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.grey.shade700),
+                  style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.grey.shade700),
                 ),
                 const SizedBox(height: 16),
                 SizedBox(
@@ -292,6 +337,18 @@ class _InventoryMovementReportPageState
                             value: outboundCount.toDouble(),
                             title: 'Outbound\n$outboundCount',
                             color: Colors.red,
+                            radius: 80,
+                            titleStyle: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                            ),
+                          ),
+                        if (saleCount > 0)
+                          PieChartSectionData(
+                            value: saleCount.toDouble(),
+                            title: 'Sale\n$saleCount',
+                            color: Colors.purple,
                             radius: 80,
                             titleStyle: const TextStyle(
                               color: Colors.white,
@@ -324,7 +381,8 @@ class _InventoryMovementReportPageState
         const SizedBox(height: 16),
         Card(
           elevation: 1,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
@@ -332,7 +390,10 @@ class _InventoryMovementReportPageState
               children: [
                 Text(
                   'Movement by Category',
-                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.grey.shade700),
+                  style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.grey.shade700),
                 ),
                 const SizedBox(height: 16),
                 SizedBox(
@@ -342,7 +403,9 @@ class _InventoryMovementReportPageState
                       : BarChart(
                           BarChartData(
                             barGroups: categoryMovements.entries.map((e) {
-                              final index = categoryMovements.keys.toList().indexOf(e.key);
+                              final index = categoryMovements.keys
+                                  .toList()
+                                  .indexOf(e.key);
                               return BarChartGroupData(
                                 x: index,
                                 barRods: [
@@ -350,32 +413,45 @@ class _InventoryMovementReportPageState
                                     toY: e.value.$1.toDouble(),
                                     color: AppTheme.limeGreen,
                                     width: 6,
-                                    borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
+                                    borderRadius: const BorderRadius.vertical(
+                                        top: Radius.circular(4)),
                                   ),
                                   BarChartRodData(
                                     toY: e.value.$2.toDouble(),
                                     color: Colors.red,
                                     width: 6,
-                                    borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
+                                    borderRadius: const BorderRadius.vertical(
+                                        top: Radius.circular(4)),
                                   ),
                                   BarChartRodData(
                                     toY: e.value.$3.toDouble(),
+                                    color: Colors.purple,
+                                    width: 6,
+                                    borderRadius: const BorderRadius.vertical(
+                                        top: Radius.circular(4)),
+                                  ),
+                                  BarChartRodData(
+                                    toY: e.value.$4.toDouble(),
                                     color: Colors.orange,
                                     width: 6,
-                                    borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
+                                    borderRadius: const BorderRadius.vertical(
+                                        top: Radius.circular(4)),
                                   ),
                                 ],
                               );
                             }).toList(),
                             borderData: FlBorderData(show: false),
-                            gridData: const FlGridData(show: true, drawVerticalLine: false),
+                            gridData: const FlGridData(
+                                show: true, drawVerticalLine: false),
                             titlesData: FlTitlesData(
                               bottomTitles: AxisTitles(
                                 sideTitles: SideTitles(
                                   showTitles: true,
                                   getTitlesWidget: (value, meta) {
-                                    final categories = categoryMovements.keys.toList();
-                                    if (value.toInt() < 0 || value.toInt() >= categories.length) {
+                                    final categories =
+                                        categoryMovements.keys.toList();
+                                    if (value.toInt() < 0 ||
+                                        value.toInt() >= categories.length) {
                                       return const Text('');
                                     }
                                     return Padding(
@@ -411,9 +487,41 @@ class _InventoryMovementReportPageState
                           ),
                         ),
                 ),
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 12,
+                  runSpacing: 8,
+                  children: [
+                    _buildLegendItem('Inbound', AppTheme.limeGreen),
+                    _buildLegendItem('Outbound', Colors.red),
+                    _buildLegendItem('Sale', Colors.purple),
+                    _buildLegendItem('New Item', Colors.orange),
+                  ],
+                ),
               ],
             ),
           ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildLegendItem(String label, Color color) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 12,
+          height: 12,
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: BorderRadius.circular(2),
+          ),
+        ),
+        const SizedBox(width: 4),
+        Text(
+          label,
+          style: const TextStyle(fontSize: 10, color: Colors.grey),
         ),
       ],
     );
@@ -459,7 +567,10 @@ class _InventoryMovementReportPageState
           children: [
             Text(
               'Latest Movements',
-              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.grey.shade700),
+              style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.grey.shade700),
             ),
             const SizedBox(height: 16),
             ListView.builder(
@@ -492,37 +603,38 @@ class _InventoryMovementReportPageState
                       disabledForegroundColor: Colors.grey[600],
                     ),
                   ),
-                const SizedBox(width: 12),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: AppTheme.darkGreen.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(8),
+                  const SizedBox(width: 12),
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: AppTheme.darkGreen.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      'Page ${_currentPage + 1} of $totalPages',
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
                   ),
-                  child: Text(
-                    'Page ${_currentPage + 1} of $totalPages',
-                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  const SizedBox(width: 12),
+                  IconButton(
+                    onPressed: _currentPage < totalPages - 1
+                        ? () {
+                            setState(() {
+                              _currentPage++;
+                            });
+                          }
+                        : null,
+                    icon: const Icon(Icons.chevron_right),
+                    style: IconButton.styleFrom(
+                      backgroundColor: AppTheme.darkGreen,
+                      disabledBackgroundColor: Colors.grey[300],
+                      foregroundColor: Colors.white,
+                      disabledForegroundColor: Colors.grey[600],
+                    ),
                   ),
-                ),
-                const SizedBox(width: 12),
-                IconButton(
-                  onPressed: _currentPage < totalPages - 1
-                      ? () {
-                          setState(() {
-                            _currentPage++;
-                          });
-                        }
-                      : null,
-                  icon: const Icon(Icons.chevron_right),
-                  style: IconButton.styleFrom(
-                    backgroundColor: AppTheme.darkGreen,
-                    disabledBackgroundColor: Colors.grey[300],
-                    foregroundColor: Colors.white,
-                    disabledForegroundColor: Colors.grey[600],
-                  ),
-                ),
-              ],
-            ),
+                ],
+              ),
           ],
         ),
       ),
@@ -533,22 +645,81 @@ class _InventoryMovementReportPageState
     late Color color;
     late IconData icon;
 
-    switch (movement.movementType) {
-      case 'inbound':
-        color = AppTheme.limeGreen;
-        icon = Icons.arrow_downward;
-        break;
-      case 'outbound':
-        color = Colors.red;
-        icon = Icons.arrow_upward;
-        break;
-      case 'new_item':
-        color = Colors.orange;
-        icon = Icons.add_circle;
-        break;
-      default:
-        color = Colors.grey;
-        icon = Icons.help;
+    // Determine icon based on reason first, then movement type
+    if (movement.reason != null) {
+      switch (movement.reason) {
+        case 'Sale':
+          color = Colors.purple;
+          icon = Icons.shopping_cart;
+          break;
+        case 'Expired':
+          color = Colors.red;
+          icon = Icons.event_busy;
+          break;
+        case 'Demaged/Defective':
+          color = Colors.orange;
+          icon = Icons.broken_image;
+          break;
+        case 'Lost':
+          color = Colors.grey;
+          icon = Icons.search_off;
+          break;
+        case 'Update Stock':
+        case 'Other':
+          color = movement.movementType == 'inbound'
+              ? AppTheme.limeGreen
+              : Colors.blue;
+          icon = movement.movementType == 'inbound'
+              ? Icons.arrow_downward
+              : Icons.arrow_upward;
+          break;
+        default:
+          // Fallback to movement type
+          switch (movement.movementType) {
+            case 'inbound':
+              color = AppTheme.limeGreen;
+              icon = Icons.arrow_downward;
+              break;
+            case 'outbound':
+              color = Colors.red;
+              icon = Icons.arrow_upward;
+              break;
+            case 'sale':
+              color = Colors.purple;
+              icon = Icons.shopping_cart;
+              break;
+            case 'new_item':
+              color = Colors.orange;
+              icon = Icons.add_circle;
+              break;
+            default:
+              color = Colors.grey;
+              icon = Icons.help;
+          }
+      }
+    } else {
+      // No reason, use movement type
+      switch (movement.movementType) {
+        case 'inbound':
+          color = AppTheme.limeGreen;
+          icon = Icons.arrow_downward;
+          break;
+        case 'outbound':
+          color = Colors.red;
+          icon = Icons.arrow_upward;
+          break;
+        case 'sale':
+          color = Colors.purple;
+          icon = Icons.shopping_cart;
+          break;
+        case 'new_item':
+          color = Colors.orange;
+          icon = Icons.add_circle;
+          break;
+        default:
+          color = Colors.grey;
+          icon = Icons.help;
+      }
     }
 
     return Card(
@@ -587,11 +758,11 @@ class _InventoryMovementReportPageState
               ),
             ],
           ),
-            trailing: Chip(
+          trailing: Chip(
             label: Text(
               movement.movementType == 'new_item'
-                  ? 'Qty: ${movement.item.quantity}'
-                  : '${movement.sign}${movement.quantityChange}',
+                  ? 'Qty: ${QuantityFormatter.formatWithMeasure(movement.item.quantity, movement.item.measure)}'
+                  : '${movement.sign}${QuantityFormatter.format(movement.quantityChange.toString())}',
               style: const TextStyle(
                 color: Colors.white,
                 fontSize: 12,
@@ -614,18 +785,20 @@ class _InventoryMovementReportPageState
     final filtered = movements.where((movement) {
       // Movement type filter
       if (_selectedMovementType != 'All') {
-        final selectedType = _selectedMovementType.toLowerCase().replaceAll(' ', '_');
+        final selectedType =
+            _selectedMovementType.toLowerCase().replaceAll(' ', '_');
         if (movement.movementType != selectedType) return false;
       }
 
       // Category filter
-      if (_selectedCategory != 'All' && movement.item.category != _selectedCategory) {
+      if (_selectedCategory != 'All' &&
+          movement.item.category != _selectedCategory) {
         return false;
       }
       // Supplier filter
       if (_selectedSupplier != 'All') {
-        final itemSupplier = movement.item.supplier.trim().isEmpty 
-            ? 'Others' 
+        final itemSupplier = movement.item.supplier.trim().isEmpty
+            ? 'Others'
             : movement.item.supplier.trim();
         if (itemSupplier != _selectedSupplier) {
           return false;

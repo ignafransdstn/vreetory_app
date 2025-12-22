@@ -6,15 +6,17 @@ import '../../domain/entities/item_entity.dart';
 
 class InventoryMovementItem {
   final ItemEntity item;
-  final int quantityChange;
-  final String movementType; // 'new_item', 'inbound' or 'outbound'
+  final double quantityChange;
+  final String movementType; // 'new_item', 'inbound', 'outbound', 'sale'
   final String sign; // '+', '-' or 'N' for new item
+  final String? reason; // The reason for quantity change
 
   InventoryMovementItem({
     required this.item,
     required this.quantityChange,
     required this.movementType,
     required this.sign,
+    this.reason,
   });
 }
 
@@ -75,7 +77,7 @@ class InventoryMovementNotifier extends StateNotifier<InventoryMovementState> {
       final movementsData = await repository.getMovementsByType(type);
       final movements = movementsData.map((m) {
         final item = m['item'] as ItemEntity;
-        final change = m['change'] as int;
+        final change = (m['change'] as num).toDouble();
         final moveType = m['type'] as String;
         return InventoryMovementItem(
           item: item,
@@ -103,18 +105,29 @@ class InventoryMovementNotifier extends StateNotifier<InventoryMovementState> {
 
   List<InventoryMovementItem> _convertToMovementItems(List<ItemEntity> items) {
     return items.map((item) {
-      final currentQty = int.tryParse(item.quantity) ?? 0;
-      final previousQty = int.tryParse(item.previousQuantity) ?? 0;
+      final currentQty = double.tryParse(item.quantity) ?? 0.0;
+      final previousQty = double.tryParse(item.previousQuantity) ?? 0.0;
       final change = currentQty - previousQty;
-      
+      final reason = item.quantityChangeReason;
+
       // Determine movement type
       String movementType;
       String sign;
-      
+
       // Check if item is new: createdAt == updatedAt (same timestamp)
       final isNewItem = item.createdAt.isAtSameMomentAs(item.updatedAt);
-      
-      if (isNewItem) {
+
+      if (reason != null && reason == 'Sale') {
+        // Sales transaction
+        movementType = 'sale';
+        sign = '-';
+      } else if (reason == 'Expired' ||
+          reason == 'Lost' ||
+          reason == 'Demaged/Defective') {
+        // Loss reasons - always outbound
+        movementType = 'outbound';
+        sign = '-';
+      } else if (isNewItem) {
         // New item - created with initial quantity (could be 0 or more)
         movementType = 'new_item';
         sign = 'N';
@@ -129,12 +142,13 @@ class InventoryMovementNotifier extends StateNotifier<InventoryMovementState> {
         movementType = 'new_item';
         sign = 'N';
       }
-      
+
       return InventoryMovementItem(
         item: item,
         quantityChange: change.abs(),
         movementType: movementType,
         sign: sign,
+        reason: reason,
       );
     }).toList();
   }

@@ -1,9 +1,12 @@
 // ignore_for_file: use_build_context_synchronously
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/animated_button.dart';
+import '../../../../core/services/image_upload_service.dart';
 import '../../domain/entities/item_entity.dart';
 import 'package:vreetory_app/features/inventory/presentation/provider/item_provider.dart';
 import '../../../authentication/presentation/providers/auth_provider.dart';
@@ -48,6 +51,7 @@ class _AddItemPageState extends ConsumerState<AddItemPage> {
       }
     });
   }
+
   final _formKey = GlobalKey<FormState>();
   final _itemNameController = TextEditingController();
   final _itemCodeController = TextEditingController();
@@ -58,6 +62,10 @@ class _AddItemPageState extends ConsumerState<AddItemPage> {
   final _expiredDateController = TextEditingController();
   final _supplierController = TextEditingController();
   final _descriptionController = TextEditingController();
+
+  final ImageUploadService _imageUploadService = ImageUploadService();
+  XFile? _selectedImage;
+  bool _isUploadingImage = false;
 
   String? _selectedCategory;
   String? _selectedMeasure;
@@ -93,12 +101,18 @@ class _AddItemPageState extends ConsumerState<AddItemPage> {
       _measureError = _selectedMeasure == null || _selectedMeasure!.isEmpty;
     });
 
-    if (_itemNameError || _categoryError || _buyRateError || _sellRateError || _expiredDateError || _measureError) {
+    if (_itemNameError ||
+        _categoryError ||
+        _buyRateError ||
+        _sellRateError ||
+        _expiredDateError ||
+        _measureError) {
       await showDialog(
         context: context,
         builder: (context) => AlertDialog(
           title: const Text('Peringatan'),
-          content: const Text('Kolom mandatory masih belum terisi, silahkan isi data yang di butuhkan pada kolom'),
+          content: const Text(
+              'Kolom mandatory masih belum terisi, silahkan isi data yang di butuhkan pada kolom'),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
@@ -135,21 +149,47 @@ class _AddItemPageState extends ConsumerState<AddItemPage> {
     if (itemCode.isEmpty) {
       itemCode = generateRandomCode();
     }
+
+    // Upload image if selected
+    String imageUrl = '';
+    if (_selectedImage != null) {
+      try {
+        setState(() => _isUploadingImage = true);
+        final File imageFile = File(_selectedImage!.path);
+        imageUrl = await _imageUploadService.uploadImage(imageFile, itemCode);
+        setState(() => _isUploadingImage = false);
+      } catch (e) {
+        setState(() => _isUploadingImage = false);
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error uploading image: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+        return;
+      }
+    }
+
     final item = ItemEntity(
       uid: '', // UID akan di-generate oleh Firestore, leave empty here
       itemName: _itemNameController.text.trim(),
       itemCode: itemCode,
       category: _selectedCategory ?? '',
       quantity: _quantityController.text.trim(),
-      previousQuantity: _quantityController.text.trim(), // Set to same as quantity on initial creation
-      minimumStock: _minimumStockController.text.trim().isEmpty ? '0' : _minimumStockController.text.trim(),
+      previousQuantity: _quantityController.text
+          .trim(), // Set to same as quantity on initial creation
+      minimumStock: _minimumStockController.text.trim().isEmpty
+          ? '0'
+          : _minimumStockController.text.trim(),
       buyRate: _buyRateController.text.trim(),
       sellRate: _sellRateController.text.trim(),
       expiredDate: _expiredDateController.text.trim(),
       measure: _selectedMeasure ?? '',
       supplier: _supplierController.text.trim(),
       description: _descriptionController.text.trim(),
-      imageUrl: '', // default, no image in form. Will be handled later
+      imageUrl: imageUrl,
       status: _status ? 'active' : 'inactive',
       createdBy: createdBy,
       updatedBy: createdBy,
@@ -181,7 +221,8 @@ class _AddItemPageState extends ConsumerState<AddItemPage> {
     final itemState = ref.watch(itemProvider);
     final authState = ref.watch(authProvider);
 
-    if (authState.status == AuthStatus.initial || authState.status == AuthStatus.loading) {
+    if (authState.status == AuthStatus.initial ||
+        authState.status == AuthStatus.loading) {
       return const Scaffold(
         body: Center(child: CircularProgressIndicator()),
       );
@@ -260,14 +301,20 @@ class _AddItemPageState extends ConsumerState<AddItemPage> {
                     TextFormField(
                       controller: _itemCodeController,
                       decoration: _inputDecoration('Enter input here').copyWith(
-                        errorText: (_formKey.currentState != null && !_formKey.currentState!.validate() && _itemCodeController.text.isNotEmpty && !RegExp(r'^[a-z0-9]{6}$').hasMatch(_itemCodeController.text))
+                        errorText: (_formKey.currentState != null &&
+                                !_formKey.currentState!.validate() &&
+                                _itemCodeController.text.isNotEmpty &&
+                                !RegExp(r'^[a-z0-9]{6}$')
+                                    .hasMatch(_itemCodeController.text))
                             ? 'Item code must be 6 chars, lowercase letters & digits'
                             : null,
                       ),
                       validator: (v) {
                         final value = v ?? '';
                         final regex = RegExp(r'^[a-z0-9]{6}$');
-                        if (value.isEmpty) return null; // Will be generated if empty
+                        if (value.isEmpty) {
+                          return null; // Will be generated if empty
+                        }
                         if (!regex.hasMatch(value)) {
                           return '';
                         }
@@ -278,16 +325,19 @@ class _AddItemPageState extends ConsumerState<AddItemPage> {
                     const SizedBox(height: 16),
                     _label('CATEGORY', error: _categoryError),
                     DropdownButtonFormField<String>(
-                      value: _selectedCategory,
-                      decoration: _inputDecoration('Select input here').copyWith(
+                      initialValue: _selectedCategory,
+                      decoration:
+                          _inputDecoration('Select input here').copyWith(
                         errorText: _categoryError ? 'Select category' : null,
                       ),
                       items: const [
                         DropdownMenuItem(value: 'Food', child: Text('Food')),
                         DropdownMenuItem(value: 'Fruit', child: Text('Fruit')),
                         DropdownMenuItem(value: 'Drink', child: Text('Drink')),
-                        DropdownMenuItem(value: 'Vegetable', child: Text('Vegetable')),
-                        DropdownMenuItem(value: 'Parcel', child: Text('Parcel')),
+                        DropdownMenuItem(
+                            value: 'Vegetable', child: Text('Vegetable')),
+                        DropdownMenuItem(
+                            value: 'Parcel', child: Text('Parcel')),
                         // Tambahkan opsi lain sesuai kebutuhan
                       ],
                       onChanged: (v) {
@@ -344,7 +394,9 @@ class _AddItemPageState extends ConsumerState<AddItemPage> {
                     TextFormField(
                       controller: _expiredDateController,
                       decoration: _inputDecoration('DD/MM/YYYY').copyWith(
-                        errorText: _expiredDateError ? 'Select date of item expired' : null,
+                        errorText: _expiredDateError
+                            ? 'Select date of item expired'
+                            : null,
                       ),
                       readOnly: true,
                       onTap: () async {
@@ -355,7 +407,8 @@ class _AddItemPageState extends ConsumerState<AddItemPage> {
                           lastDate: DateTime(2100),
                         );
                         if (picked != null) {
-                          _expiredDateController.text = DateFormat('dd/MM/yyyy').format(picked);
+                          _expiredDateController.text =
+                              DateFormat('dd/MM/yyyy').format(picked);
                           if (_expiredDateError) {
                             setState(() {
                               _expiredDateError = false;
@@ -369,7 +422,7 @@ class _AddItemPageState extends ConsumerState<AddItemPage> {
                     const SizedBox(height: 16),
                     _label('MEASURE', error: _measureError),
                     DropdownButtonFormField<String>(
-                      value: _selectedMeasure,
+                      initialValue: _selectedMeasure,
                       decoration: _inputDecoration('Enter input here').copyWith(
                         errorText: _measureError ? 'Select measure' : null,
                       ),
@@ -400,6 +453,10 @@ class _AddItemPageState extends ConsumerState<AddItemPage> {
                     ),
                     _helper('Fill supplier name (*optional)'),
                     const SizedBox(height: 16),
+                    _label('PRODUCT IMAGE'),
+                    _buildImageUploadSection(),
+                    _helper('Upload product image (*optional)'),
+                    const SizedBox(height: 16),
                     _label('ITEM DESCRIPTION'),
                     TextFormField(
                       controller: _descriptionController,
@@ -412,7 +469,9 @@ class _AddItemPageState extends ConsumerState<AddItemPage> {
                     CheckboxListTile(
                       value: _status,
                       onChanged: (v) => setState(() => _status = v ?? true),
-                      title: const Text('Check for active status item or uncheck for inactive status item', style: TextStyle(color: Colors.white)),
+                      title: const Text(
+                          'Check for active status item or uncheck for inactive status item',
+                          style: TextStyle(color: Colors.white)),
                       controlAffinity: ListTileControlAffinity.leading,
                       contentPadding: EdgeInsets.zero,
                     ),
@@ -431,7 +490,8 @@ class _AddItemPageState extends ConsumerState<AddItemPage> {
                                 if (createdBy.isEmpty) {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     const SnackBar(
-                                      content: Text('You must be logged in to add an item.'),
+                                      content: Text(
+                                          'You must be logged in to add an item.'),
                                       backgroundColor: Colors.red,
                                     ),
                                   );
@@ -491,6 +551,94 @@ class _AddItemPageState extends ConsumerState<AddItemPage> {
           borderRadius: BorderRadius.circular(6),
           borderSide: BorderSide.none,
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       );
+
+  Widget _buildImageUploadSection() {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Column(
+        children: [
+          if (_selectedImage != null)
+            Column(
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Image.file(
+                    File(_selectedImage!.path),
+                    height: 200,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                TextButton.icon(
+                  onPressed: () {
+                    setState(() {
+                      _selectedImage = null;
+                    });
+                  },
+                  icon: const Icon(Icons.delete, color: Colors.red),
+                  label: const Text(
+                    'Remove Image',
+                    style: TextStyle(color: Colors.red),
+                  ),
+                ),
+                const SizedBox(height: 8),
+              ],
+            ),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: _isUploadingImage
+                      ? null
+                      : () async {
+                          final image =
+                              await _imageUploadService.pickImageFromCamera();
+                          if (image != null) {
+                            setState(() {
+                              _selectedImage = image;
+                            });
+                          }
+                        },
+                  icon: const Icon(Icons.camera_alt),
+                  label: const Text('Camera'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppTheme.darkGreen,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: _isUploadingImage
+                      ? null
+                      : () async {
+                          final image =
+                              await _imageUploadService.pickImageFromGallery();
+                          if (image != null) {
+                            setState(() {
+                              _selectedImage = image;
+                            });
+                          }
+                        },
+                  icon: const Icon(Icons.photo_library),
+                  label: const Text('Gallery'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppTheme.darkGreen,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
 }
